@@ -3,8 +3,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import Toast from 'react-native-toast-message';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { toastConfig } from '@/hooks/useToastConfig';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -19,6 +21,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DefaultTheme : DefaultTheme}>
+      <Toast config={toastConfig} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="salary" options={{ headerShown: false }} />
