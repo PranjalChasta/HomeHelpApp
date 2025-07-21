@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useColorScheme, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 export default function CustomCalendar({
@@ -6,100 +6,17 @@ export default function CustomCalendar({
     markedDates,
     selectedDate
 }: any) {
-    // const { id, name, role } = useLocalSearchParams();
-    // const router = useRouter();
-    // const [selectedDate, setSelectedDate] = useState('');
-    // const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
 
-    // useEffect(() => {
-    //     if (id) {
-    //         loadLeaves();
-    //     }
-    // }, [id]);
-
-    // const loadLeaves = async () => {
-    //     try {
-    //         const result = await db.find({
-    //             selector: {
-    //                 type: 'attendance',
-    //                 helper_id: id,
-    //                 status: 'leave'
-    //             }
-    //         });
-
-    //         const marks: Record<string, any> = {};
-    //         result.docs.forEach((doc: any) => {
-    //             marks[doc.date] = {
-    //                 marked: true,
-    //                 dotColor: 'red',
-    //                 selectedColor: '#fdecea',
-    //                 dayTextColor: 'red',
-    //                 selected: true,
-    //             };
-    //         });
-    //         setSelectedDate(new Date().toISOString());
-    //         setMarkedDates(marks);
-    //     } catch (err) {
-    //         console.error("Failed to load leaves", err);
-    //     }
-    // };
-
-    // const markLeave = async () => {
-    //     if (!selectedDate) {
-    //         alert("Please select a date first.");
-    //         return;
-    //     }
-
-    //     const docId = `attend_${selectedDate}_${id}`;
-
-    //     try {
-    //         const existing = await db.getDoc(docId);
-    //         if (existing?._id) {
-    //             Alert.alert(
-    //                 "Leave already marked",
-    //                 "Do you want to remove it?",
-    //                 [
-    //                     { text: "Cancel", style: "cancel" },
-    //                     {
-    //                         text: "Delete",
-    //                         style: "destructive",
-    //                         onPress: async () => {
-    //                             try {
-    //                                 await db.deleteDoc(existing._id, existing._rev);
-    //                                 alert("Leave removed!");
-    //                                 loadLeaves();
-    //                             } catch (deleteErr) {
-    //                                 console.error("Error deleting leave:", deleteErr);
-    //                                 alert("Failed to delete leave.");
-    //                             }
-    //                         },
-    //                     },
-    //                 ],
-    //                 { cancelable: true }
-    //             );
-    //         }
-    //     } catch (err: any) {
-    //         if (err.response?.status === 404) {
-    //             // No leave exists, create one
-    //             const doc = {
-    //                 _id: docId,
-    //                 type: 'attendance',
-    //                 helper_id: id,
-    //                 date: selectedDate,
-    //                 status: 'leave',
-    //             };
-    //             await db.createDoc(doc);
-    //             alert("Leave marked!");
-    //             loadLeaves();
-    //         } else {
-    //             console.error("Error checking existing leave:", err);
-    //             alert("Something went wrong.");
-    //         }
-    //     }
-    // };
+    const backgroundColor = isDark ? '#111827' : '#fff';
+    const dayTextColor = isDark ? '#f9fafb' : '#1f2937';
+    const todayColor = '#00adf5';
+    const selectedBgColor = '#00adf5';
+    const textSecondary = isDark ? '#9ca3af' : '#6b7280';
 
     return (
-        <View style={styles.calendarCard}>
+        <View style={[styles.calendarCard, { backgroundColor }]}>
             <Calendar
                 onDayPress={(day) => setSelectedDate(day.dateString)}
                 markedDates={{
@@ -107,16 +24,22 @@ export default function CustomCalendar({
                     [selectedDate]: {
                         ...(markedDates[selectedDate] || {}),
                         selected: true,
-                        selectedColor: '#00adf5',
+                        selectedColor: selectedBgColor,
                     }
                 }}
-                style={styles.calendar}
+                style={[styles.calendar, { backgroundColor }]}
                 theme={{
-                    todayTextColor: '#00adf5',
-                    selectedDayBackgroundColor: '#00adf5',
-                    arrowColor: '#00adf5',
-                    textSectionTitleColor: '#333333',
-                    dayTextColor: '#444444',
+                    backgroundColor,
+                    calendarBackground: backgroundColor,
+                    todayTextColor: todayColor,
+                    selectedDayBackgroundColor: selectedBgColor,
+                    arrowColor: todayColor,
+                    textDayFontWeight: '500',
+                    textSectionTitleColor: textSecondary,
+                    dayTextColor,
+                    monthTextColor: dayTextColor,
+                    textDisabledColor: isDark ? '#4b5563' : '#d1d5db',
+                    textDayHeaderFontWeight: '600',
                 }}
             />
         </View>
@@ -125,7 +48,6 @@ export default function CustomCalendar({
 
 const styles = StyleSheet.create({
     calendarCard: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 10,
         shadowColor: '#000',

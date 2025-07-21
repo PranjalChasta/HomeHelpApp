@@ -5,7 +5,8 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // Define icons per role
-const roleIconMap: Record<string, { lib: string; name: string }> = {
+export const roleIconMap: Record<string, { lib: string; name: string }> = {
+    // Role-based icons
     Cook: { lib: 'MaterialCommunityIcons', name: 'chef-hat' },
     Maid: { lib: 'MaterialCommunityIcons', name: 'broom' },
     Driver: { lib: 'FontAwesome5', name: 'car' },
@@ -22,9 +23,17 @@ const roleIconMap: Record<string, { lib: string; name: string }> = {
     ACService: { lib: 'MaterialCommunityIcons', name: 'air-conditioner' },
     PestControl: { lib: 'MaterialCommunityIcons', name: 'bug' },
     Water: { lib: 'MaterialCommunityIcons', name: 'water-pump' },
+
+    // Stat icons (reused from the existing icon sets)
+    Leave: { lib: 'MaterialCommunityIcons', name: 'calendar-check' },     // reuse for 'Leave'
+    Absent: { lib: 'MaterialCommunityIcons', name: 'calendar-remove' },   // best match for absent
+    'Leave Taken': { lib: 'MaterialCommunityIcons', name: 'calendar-check' },
+    'Total Salary': { lib: 'MaterialCommunityIcons', name: 'currency-inr' }, // matches salary
+    Deduction: { lib: 'MaterialCommunityIcons', name: 'cash-minus' },     // reuse deduction icon
+
+    // Default fallback
     Default: { lib: 'Ionicons', name: 'person-circle-outline' },
 };
-
 type Props = {
     role: string;
     size?: number;

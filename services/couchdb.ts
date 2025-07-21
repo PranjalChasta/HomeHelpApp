@@ -38,8 +38,16 @@ export default {
         }
     },
     getDoc: async (id: string) => {
-        const res = await couch.get(`/${DB_NAME}/${id}`);
-        return res.data;
+        try {
+            const res = await couch.get(`/${DB_NAME}/${id}`);
+            return res?.data;
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                return null;
+            }
+            console.log('❌ Failed to get doc:', error.message);
+            throw error;
+        }
     },
     updateDoc: async (id: string, doc: any) => {
         const res = await couch.put(`/${DB_NAME}/${id}`, doc);

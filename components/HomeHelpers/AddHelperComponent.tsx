@@ -177,32 +177,6 @@ export default function AddHelper() {
                         )}
                     />
 
-                    {/* Role */}
-                    {/* <Text style={[
-                            styles.label,
-                            { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
-                        ]}>Role</Text>
-                        <Controller
-                            control={control}
-                            name="role"
-                            rules={{ required: true }}
-                            render={({ field: { onChange, value } }) => (
-                                <TextInput
-                                    style={[
-                                        styles.input,
-                                        {
-                                            backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                                            color: isDark ? '#f9fafb' : '#111827',
-                                            borderColor: isDark ? '#52525b' : '#d1d5db'
-                                        }
-                                    ]}
-                                    onChangeText={onChange}
-                                    value={value}
-                                    placeholder="e.g., Cook"
-                                    placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
-                                />
-                            )}
-                        /> */}
                     {/* Role Dropdown */}
                     <Text style={[
                         styles.label,

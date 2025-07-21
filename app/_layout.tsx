@@ -89,6 +89,14 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="helper-details"
+              options={{
+                headerShown: false,
+                presentation: 'modal',
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen
               name="+not-found"
               options={{
                 title: 'Not Found',

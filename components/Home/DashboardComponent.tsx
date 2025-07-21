@@ -74,7 +74,7 @@ export default function Dashboard() {
             <ImageBackground
                 source={require('@/assets/images/bg-smart-home.jpg')}
                 style={dashboardStyles.backgroundImage}
-                imageStyle={{ opacity: isDark ? 0.5 : 0.7 }}
+                imageStyle={{ opacity: isDark ? 0.5 : 0.5 }}
             >
                 <ScrollView
                     style={dashboardStyles.scrollView}

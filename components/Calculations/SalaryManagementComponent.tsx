@@ -1,16 +1,21 @@
 import db from '@/services/couchdb';
+import { RoleIcon } from '@/utils/roleIcons';
 import { calculateSalary } from '@/utils/salaryCalculator';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 export default function SalaryManagement() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
     type Summary = { present: number; totalLeaves: number; deductions: number; finalSalary: number };
     const [summary, setSummary] = useState<Summary | null>(null);
-    type Helper = { name: string; monthly_salary: number;[key: string]: any };
+    const [loading, setLoading] = useState(false);
+    type Helper = { name: string; monthly_salary: number; role?: string;[key: string]: any };
     const [helper, setHelper] = useState<Helper | null>(null);
 
     useEffect(() => {
@@ -23,11 +28,8 @@ export default function SalaryManagement() {
             setHelper(helperDoc);
             const now = new Date();
             const year = now.getFullYear();
-            const month = (now.getMonth() + 1).toString().padStart(2, '0'); // "07"
-
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
             const firstDayOfMonth = `${year}-${month}-01`;
-
-            // Get last day of the current month
             const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
             const lastDayOfMonth = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
 
@@ -42,9 +44,7 @@ export default function SalaryManagement() {
             const result = await db.find({
                 selector: selectorData
             });
-            // Count leaves
             const leaveCount = result.docs.filter((d: any) => d.status === 'leave').length;
-
             const monthNumber = now.getMonth();
             const totalDays = new Date(year, monthNumber + 1, 0).getDate();
             const present = totalDays;
@@ -57,116 +57,104 @@ export default function SalaryManagement() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.card}>
-                <View style={{ position: 'relative', marginBottom: 20, height: 40, justifyContent: 'center', alignItems: 'center' }}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{ position: 'absolute', left: 0, top: 5 }}
-                    >
-                        <Ionicons name="arrow-back" size={28} color="#333" />
-                    </TouchableOpacity>
-
-                    <Text style={{ fontSize: 24, fontWeight: '600', textAlign: 'center' }}>
-                        Salary Summary
-                    </Text>
-                </View>
-                <View style={styles.cardHeader}>
-                    <Text style={styles.name}>{helper?.name} <Text style={styles.role}>({helper?.role})</Text></Text>
-                </View>
-
-                {summary && (
-                    <View style={styles.summaryBox}>
-                        <Text style={styles.label}>
-                            Present Days: <Text style={styles.value}>{summary.present}</Text>
-                        </Text>
-                        <Text style={styles.label}>
-                            Paid Leaves: <Text style={styles.valueGreen}>2</Text>
-                        </Text>
-                        <Text style={styles.label}>
-                            Unpaid Leaves:{' '}
-                            <Text style={styles.valueRed}>{summary.totalLeaves > 2 ? summary.totalLeaves - 2 : summary.totalLeaves}</Text>
-                        </Text>
-                        <Text style={styles.label}>
-                            Total Leaves Taken: <Text style={styles.value}>{summary.totalLeaves}</Text>
-                        </Text>
-                        <Text style={styles.label}>
-                            Deductions: ₹<Text style={styles.valueRed}>{summary.deductions.toFixed(2)}</Text>
-                        </Text>
-                        <Text style={styles.label}>
-                            Final Salary: ₹<Text style={styles.valueGreen}>{summary.finalSalary.toFixed(2)}</Text>
-                        </Text>
-                    </View>
-                )}
+        <SafeAreaView>
+            <View style={{ alignItems: 'center', marginBottom: 18 }}>
+                <Text style={[styles.name, { color: isDark ? '#f9fafb' : '#1f2937' }]}>SALARY DETAILS</Text>
             </View>
+            {loading && summary ? (
+                <ActivityIndicator size="large" color={isDark ? '#818cf8' : '#6366f1'} />
+            ) : (
+                summary && (<>
+                    <View style={styles.detailRow}>
+                        <Ionicons name="calendar-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Present:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary?.present}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Ionicons name="card-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Paid Leave:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{2}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <RoleIcon role="Absent" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Unpaid Leave:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves > 2 ? summary.totalLeaves - 2 : summary.totalLeaves}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <RoleIcon role="Leave" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Leave Taken:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <RoleIcon role="Deduction" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Deductions:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.deductions.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <RoleIcon role="Total Salary" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Final Salary:</Text>
+                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.finalSalary}</Text>
+                    </View>
+                </>)
+            )}
         </SafeAreaView>
     );
 }
 
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f6f8',
-        paddingHorizontal: 16,
-        paddingTop: 24,
-        marginVertical: 30
-    },
     card: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 18,
         padding: 20,
         elevation: 3,
-        shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
-    },
-    header: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#333',
-        marginBottom: 8,
-    },
-    subheader: {
-        fontSize: 20,
-        color: '#000',
-        textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: 24,
     },
     cardHeader: {
         marginBottom: 12,
     },
     name: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
-        color: '#111',
         textAlign: 'center',
-        letterSpacing: 2
-    },
-    role: {
-        fontSize: 14,
-        color: '#666',
-        paddingLeft: 10,
-        letterSpacing: 0
+        letterSpacing: 1
     },
     summaryBox: {
         gap: 10,
     },
     label: {
         fontSize: 16,
-        color: '#444',
     },
     value: {
         fontWeight: 'bold',
-        color: '#222',
     },
     valueGreen: {
         fontWeight: 'bold',
-        color: '#2e7d32',
     },
     valueRed: {
         fontWeight: 'bold',
-        color: '#c62828',
+    },
+
+    role: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginTop: 2,
+        marginBottom: 12,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    detailLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginLeft: 10,
+        flex: 1,
+    },
+    detailValue: {
+        fontSize: 16,
+        fontWeight: '700',
     },
 });
