@@ -1,84 +1,187 @@
-import { StyleSheet } from "react-native";
+import { StatusBar, StyleSheet } from "react-native";
 
 export const dashboardStyles = StyleSheet.create({
-    background: {
-        flex: 1,
-    },
     container: {
-        padding: 16,
+        flex: 1,
+        marginTop: StatusBar.currentHeight
+    },
+    backgroundImage: {
+        flex: 1,
         backgroundColor: 'rgba(0,0,0,0.4)',
     },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 16,
+    },
     header: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        color: '#fff',
-        textAlign: 'center',
-        textShadowColor: '#00f0ff',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 6,
-    },
-    card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 14,
-        shadowColor: '#00f0ff',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
-        backdropFilter: 'blur(10px)',
-    },
-    cardHeader: {
-        marginBottom: 12,
-    },
-    name: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#fff',
-    },
-    role: {
-        fontSize: 14,
-        color: '#bbf7d0',
-    },
-    actions: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 16,
+        marginBottom: 24,
     },
-    actionBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        paddingVertical: 10,
-        marginHorizontal: 5,
-        borderRadius: 10,
+    greeting: {
+        fontSize: 28,
+        fontWeight: 'bold',
+    },
+    subtitle: {
+        fontSize: 16,
+        marginTop: 4,
+    },
+    profileButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
         elevation: 3,
     },
-    actionText: {
-        color: '#fff',
-        marginLeft: 8,
-        fontWeight: '600',
-    },
-    addButton: {
-        marginTop: 20,
-        backgroundColor: '#4f46e5',
-        padding: 16,
-        borderRadius: 12,
+    statsContainer: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    statCard: {
+        flex: 1,
+        borderRadius: 16,
+        padding: 16,
+        marginHorizontal: 4,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    statIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#4f46e5',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
+        marginBottom: 8,
     },
-    addButtonText: {
-        color: '#fff',
+    statValue: {
+        fontSize: 24,
         fontWeight: 'bold',
-        marginLeft: 10,
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    quickActionsContainer: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+    },
+    quickActions: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    actionCard: {
+        width: '48%',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10
+    },
+    actionIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    actionLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    recentHelpersContainer: {
+        marginBottom: 24,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    seeAllText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    helperCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    helperAvatarContainer: {
+        marginRight: 12,
+    },
+    helperInfo: {
+        flex: 1,
+    },
+    helperName: {
         fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    helperRole: {
+        fontSize: 14,
+    },
+    helperActions: {
+        flexDirection: 'row',
+    },
+    iconButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    emptyState: {
+        borderRadius: 16,
+        padding: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyStateText: {
+        fontSize: 16,
+        marginTop: 12,
+        marginBottom: 16,
+    },
+    emptyStateButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    emptyStateButtonText: {
+        color: '#ffffff',
+        fontWeight: '600',
     },
 });

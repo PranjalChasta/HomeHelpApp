@@ -1,7 +1,7 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Appearance, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Setting sections and items
@@ -40,36 +40,36 @@ const SETTINGS = [
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  
+
   // State for toggle switches
   const [settings, setSettings] = useState({
     darkMode: isDark,
     attendanceReminder: true,
     salaryReminder: true,
   });
-  
+
   const handleToggle = (id: string, value: boolean) => {
     setSettings(prev => ({ ...prev, [id]: value }));
-    
+    Appearance.setColorScheme(value ? 'dark' : 'light');
     // Here you would implement actual functionality for these toggles
     // For example, changing the theme system-wide
   };
-  
+
   const handleAction = (id: string) => {
     // Implement actions for buttons
     console.log(`Action triggered: ${id}`);
-    
+
     // Here you would implement actual functionality
     // For example, triggering a backup or showing an about modal
   };
-  
+
   const renderItem = (item: any) => {
     const iconColor = isDark ? '#818cf8' : '#6366f1';
     const textColor = isDark ? '#f9fafb' : '#1f2937';
     const secondaryTextColor = isDark ? '#d1d5db' : '#4b5563';
-    
+
     return (
-      <View 
+      <View
         key={item.id}
         style={[
           styles.settingItem,
@@ -79,11 +79,11 @@ export default function SettingsScreen() {
         <View style={styles.settingIconContainer}>
           <Ionicons name={item.icon} size={22} color={iconColor} />
         </View>
-        
+
         <Text style={[styles.settingTitle, { color: textColor }]}>
           {item.title}
         </Text>
-        
+
         {item.type === 'switch' && (
           <Switch
             value={settings[item.id as keyof typeof settings]}
@@ -92,7 +92,7 @@ export default function SettingsScreen() {
             thumbColor="#ffffff"
           />
         )}
-        
+
         {item.type === 'action' && (
           <TouchableOpacity
             onPress={() => handleAction(item.id)}
@@ -104,9 +104,9 @@ export default function SettingsScreen() {
       </View>
     );
   };
-  
+
   return (
-    <SafeAreaView 
+    <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: isDark ? '#111827' : '#f9fafb' }
@@ -117,17 +117,17 @@ export default function SettingsScreen() {
           Settings
         </Text>
       </View>
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {SETTINGS.map((section, index) => (
-          <View 
+          <View
             key={index}
             style={[
               styles.section,
               { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
             ]}
           >
-            <Text 
+            <Text
               style={[
                 styles.sectionTitle,
                 { color: isDark ? '#d1d5db' : '#4b5563' }
@@ -135,13 +135,13 @@ export default function SettingsScreen() {
             >
               {section.title}
             </Text>
-            
+
             <View style={styles.sectionContent}>
               {section.data.map(item => renderItem(item))}
             </View>
           </View>
         ))}
-        
+
         <View style={styles.appInfo}>
           <Text style={[styles.appVersion, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
             Home Help App v1.0.0
@@ -218,4 +218,4 @@ const styles = StyleSheet.create({
   appVersion: {
     fontSize: 14,
   },
-}); 
+});

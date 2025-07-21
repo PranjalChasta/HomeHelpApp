@@ -64,39 +64,39 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen 
-              name="salary" 
-              options={{ 
+            <Stack.Screen
+              name="salary"
+              options={{
                 headerShown: false,
                 presentation: 'modal',
                 animation: 'slide_from_bottom',
-              }} 
+              }}
             />
-            <Stack.Screen 
-              name="attendance" 
-              options={{ 
+            <Stack.Screen
+              name="attendance"
+              options={{
                 headerShown: false,
                 presentation: 'card',
                 animation: 'slide_from_right',
-              }} 
+              }}
             />
-            <Stack.Screen 
-              name="add-helper" 
-              options={{ 
+            <Stack.Screen
+              name="add-helper"
+              options={{
                 headerShown: false,
                 presentation: 'modal',
                 animation: 'fade_from_bottom',
-              }} 
+              }}
             />
-            <Stack.Screen 
-              name="+not-found" 
+            <Stack.Screen
+              name="+not-found"
               options={{
                 title: 'Not Found',
                 headerShown: true,
               }}
             />
           </Stack>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <StatusBar hidden={false} style={colorScheme === 'dark' ? 'light' : 'dark'} />
         </View>
       </ThemeProvider>
     </SafeAreaProvider>

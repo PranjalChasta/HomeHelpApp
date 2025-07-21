@@ -1,9 +1,9 @@
 import { Helper } from '@/components/Home/DashboardComponent';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { default as couchdb } from '@/services/couchdb';
+import couchdb from '@/services/couchdb';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,20 +11,35 @@ export default function HelpersScreen() {
   const [helpers, setHelpers] = React.useState<Helper[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();
+  const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchHelpers();
   }, []);
+
+  useEffect(() => {
+    fetchHelpers();
+  }, [params?.role]);
 
   const fetchHelpers = async () => {
     setIsLoading(true);
     try {
-      const result = await couchdb.getAllDocs();
-      // Apply proper type casting to filter only items with a role property
-      const helperItems = result.filter((item: any) => item.role) as Helper[];
-      setHelpers(helperItems);
+      if (params?.role) {
+        const selectorData = {
+          role: params?.role,
+          type: "helper"
+        };
+        const result = await couchdb.findByRole({
+          selector: selectorData
+        });
+        setHelpers(result?.docs);
+      } else {
+        const result = await couchdb.getAllDocs();
+        const helperItems = result.filter((item: any) => item.role) as Helper[];
+        setHelpers(helperItems);
+      }
     } catch (error) {
       console.error('Error fetching helpers:', error);
     } finally {
@@ -72,9 +87,9 @@ export default function HelpersScreen() {
   );
 
   return (
-    <SafeAreaView 
+    <SafeAreaView
       style={[
-        styles.container, 
+        styles.container,
         { backgroundColor: isDark ? '#111827' : '#f9fafb' }
       ]}
     >
@@ -82,7 +97,7 @@ export default function HelpersScreen() {
         <Text style={[styles.title, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
           Your Helpers
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.addButton,
             { backgroundColor: isDark ? '#818cf8' : '#6366f1' }
@@ -165,4 +180,4 @@ const styles = StyleSheet.create({
   actionContainer: {
     padding: 8,
   },
-}); 
+});

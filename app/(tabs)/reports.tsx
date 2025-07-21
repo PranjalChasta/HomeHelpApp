@@ -27,13 +27,13 @@ export default function ReportsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenWidth = Dimensions.get('window').width;
-  
+
   // Calculate max values for scaling
   const maxSalary = Math.max(...salaryData.map(item => item.amount));
   const maxAttendance = 31; // Maximum days in a month
-  
+
   return (
-    <SafeAreaView 
+    <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: isDark ? '#111827' : '#f9fafb' }
@@ -44,13 +44,13 @@ export default function ReportsScreen() {
           Reports & Analytics
         </Text>
       </View>
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Summary Cards */}
         <View style={styles.summaryContainer}>
-          <View 
+          <View
             style={[
-              styles.summaryCard, 
+              styles.summaryCard,
               { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
             ]}
           >
@@ -64,10 +64,10 @@ export default function ReportsScreen() {
               Total Helpers
             </Text>
           </View>
-          
-          <View 
+
+          <View
             style={[
-              styles.summaryCard, 
+              styles.summaryCard,
               { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
             ]}
           >
@@ -81,10 +81,10 @@ export default function ReportsScreen() {
               Attendance Rate
             </Text>
           </View>
-          
-          <View 
+
+          <View
             style={[
-              styles.summaryCard, 
+              styles.summaryCard,
               { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
             ]}
           >
@@ -99,9 +99,9 @@ export default function ReportsScreen() {
             </Text>
           </View>
         </View>
-        
+
         {/* Attendance Chart */}
-        <View 
+        <View
           style={[
             styles.chartContainer,
             { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
@@ -110,29 +110,29 @@ export default function ReportsScreen() {
           <Text style={[styles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
             Attendance Overview
           </Text>
-          
+
           <View style={styles.barChartContainer}>
             {attendanceData.map((item, index) => (
               <View key={index} style={styles.barGroup}>
                 <View style={styles.barContainer}>
-                  <View 
+                  <View
                     style={[
-                      styles.bar, 
-                      { 
+                      styles.bar,
+                      {
                         height: (item.present / maxAttendance) * 150,
-                        backgroundColor: '#6366f1' 
+                        backgroundColor: '#6366f1'
                       }
-                    ]} 
+                    ]}
                   />
-                  <View 
+                  <View
                     style={[
-                      styles.bar, 
-                      { 
+                      styles.bar,
+                      {
                         height: (item.absent / maxAttendance) * 150,
                         backgroundColor: '#ef4444',
                         marginLeft: 4
                       }
-                    ]} 
+                    ]}
                   />
                 </View>
                 <Text style={[styles.barLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
@@ -141,7 +141,7 @@ export default function ReportsScreen() {
               </View>
             ))}
           </View>
-          
+
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#6366f1' }]} />
@@ -157,9 +157,9 @@ export default function ReportsScreen() {
             </View>
           </View>
         </View>
-        
+
         {/* Salary Chart */}
-        <View 
+        <View
           style={[
             styles.chartContainer,
             { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
@@ -168,37 +168,37 @@ export default function ReportsScreen() {
           <Text style={[styles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
             Salary Trends
           </Text>
-          
+
           <View style={styles.lineChartContainer}>
             {/* Line chart background grid */}
             <View style={styles.chartGrid}>
               {[0, 1, 2, 3].map((i) => (
-                <View 
-                  key={i} 
+                <View
+                  key={i}
                   style={[
-                    styles.gridLine, 
+                    styles.gridLine,
                     { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
-                  ]} 
+                  ]}
                 />
               ))}
             </View>
-            
+
             {/* Line chart */}
             <View style={styles.lineChart}>
               <View style={styles.lineChartInner}>
                 {salaryData.map((item, index) => {
                   const nextItem = salaryData[index + 1];
                   if (!nextItem) return null;
-                  
+
                   const startHeight = (item.amount / maxSalary) * 150;
                   const endHeight = (nextItem.amount / maxSalary) * 150;
-                  
+
                   return (
                     <View key={index} style={styles.lineSegment}>
-                      <View 
+                      <View
                         style={[
-                          styles.line, 
-                          { 
+                          styles.line,
+                          {
                             backgroundColor: '#10b981',
                             transform: [
                               { translateY: -startHeight },
@@ -206,40 +206,40 @@ export default function ReportsScreen() {
                               { scaleX: Math.sqrt(Math.pow(40, 2) + Math.pow(endHeight - startHeight, 2)) / 40 }
                             ]
                           }
-                        ]} 
+                        ]}
                       />
-                      <View 
+                      <View
                         style={[
-                          styles.dot, 
-                          { 
+                          styles.dot,
+                          {
                             backgroundColor: '#10b981',
                             transform: [{ translateY: -startHeight }]
                           }
-                        ]} 
+                        ]}
                       />
                     </View>
                   );
                 })}
-                <View 
+                <View
                   style={[
-                    styles.dot, 
-                    { 
+                    styles.dot,
+                    {
                       backgroundColor: '#10b981',
                       transform: [{ translateY: -(salaryData[salaryData.length - 1].amount / maxSalary) * 150 }],
                       right: 0
                     }
-                  ]} 
+                  ]}
                 />
               </View>
             </View>
-            
+
             {/* X-axis labels */}
             <View style={styles.xAxisLabels}>
               {salaryData.map((item, index) => (
-                <Text 
-                  key={index} 
+                <Text
+                  key={index}
                   style={[
-                    styles.xAxisLabel, 
+                    styles.xAxisLabel,
                     { color: isDark ? '#d1d5db' : '#4b5563' }
                   ]}
                 >
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
   },
@@ -422,4 +422,4 @@ const styles = StyleSheet.create({
     width: 40,
     textAlign: 'center',
   },
-}); 
+});

@@ -60,6 +60,17 @@ export default {
             console.log(err)
         }
     },
+    findByRole: async ({ selector }: any) => {
+        try {
+            const res = await couch.post(`/${DB_NAME}/_find`, {
+                selector,
+                use_index: ["_design/helper-index", "helper-index"]
+            });
+            return res.data;
+        } catch (err) {
+            console.log(err)
+        }
+    },
     getAllDocs: async () => {
         try {
             const res = await couch.get(`/${DB_NAME}/_all_docs`, {
