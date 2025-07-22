@@ -105,7 +105,10 @@ export default function Dashboard() {
 
                     {/* Stats Overview */}
                     <View style={dashboardStyles.statsContainer}>
-                        <TouchableOpacity onPress={() => router.push('/helpers')} style={[dashboardStyles.statCard, { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }]}>
+                        <TouchableOpacity
+                            onPress={() => router.push('/helpers')}
+                            style={[dashboardStyles.statCard, { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }]}
+                        >
                             <View style={[dashboardStyles.statIconContainer, { backgroundColor: '#6366f1' }]}>
                                 <Ionicons name="people" size={20} color="#ffffff" />
                             </View>

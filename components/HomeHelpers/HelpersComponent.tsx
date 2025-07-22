@@ -23,10 +23,6 @@ export default function Helpers({ params }: any) {
         fetchHelpers();
     }, [params?.role]);
 
-    // useEffect(() => {
-    //     fetchHelpers();
-    // }, [helpers]);
-
     const fetchHelpers = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -47,9 +43,8 @@ export default function Helpers({ params }: any) {
         } finally {
             setIsLoading(false);
         }
-    }, [params?.role]); // dependencies
+    }, [params?.role]);
 
-    // Call when screen is focused
     useFocusEffect(
         useCallback(() => {
             fetchHelpers();
@@ -98,7 +93,7 @@ export default function Helpers({ params }: any) {
         <SafeAreaView
             style={[
                 styles.container,
-                { backgroundColor: isDark ? '#111827' : '#f9fafb' }
+                { backgroundColor: isDark ? '#111827' : '#e3e3e4ff' }
             ]}
         >
             <View style={styles.header}>
@@ -165,11 +160,11 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 16,
         marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        // shadowColor: '#000',
+        // shadowOffset: { width: 0, height: 0.2 },
+        // shadowOpacity: 0.05,
+        // shadowRadius: 8,
+        // elevation: 0.5,
     },
     avatarContainer: {
         marginRight: 16,

@@ -39,12 +39,13 @@ export const dashboardStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 3,
+        // elevation: 3,
     },
     statsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 24,
+        gap: 10
     },
     statCard: {
         flex: 1,
@@ -56,7 +57,7 @@ export const dashboardStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 2,
+        // elevation: 2,
     },
     statIconContainer: {
         width: 40,
@@ -99,7 +100,7 @@ export const dashboardStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 2,
+        // elevation: 2,
         display: 'flex',
         flexDirection: 'column',
         gap: 10
@@ -139,7 +140,7 @@ export const dashboardStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 2,
+        // elevation: 2,
     },
     helperAvatarContainer: {
         marginRight: 12,

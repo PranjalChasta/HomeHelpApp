@@ -110,7 +110,7 @@ export default function SettingDashboard() {
         <SafeAreaView
             style={[
                 settingStyles.container,
-                { backgroundColor: isDark ? '#111827' : '#f9fafb' }
+                { backgroundColor: isDark ? '#111827' : '#e3e3e4ff' }
             ]}
         >
             <View style={settingStyles.header}>
