@@ -68,7 +68,7 @@ export default function RootLayout() {
               name="salary"
               options={{
                 headerShown: false,
-                presentation: 'modal',
+                presentation: 'card',
                 animation: 'slide_from_bottom',
               }}
             />
@@ -84,7 +84,7 @@ export default function RootLayout() {
               name="add-helper"
               options={{
                 headerShown: false,
-                presentation: 'modal',
+                presentation: 'card',
                 animation: 'fade_from_bottom',
               }}
             />
@@ -92,7 +92,7 @@ export default function RootLayout() {
               name="helper-details"
               options={{
                 headerShown: false,
-                presentation: 'modal',
+                presentation: 'card',
                 animation: 'slide_from_right',
               }}
             />

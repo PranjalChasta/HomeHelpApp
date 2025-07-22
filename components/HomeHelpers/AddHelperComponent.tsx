@@ -45,7 +45,7 @@ export default function AddHelper() {
                     topOffset: 80,
                 });
                 reset();
-                setTimeout(() => router.replace('/'), 1200);
+                setTimeout(() => router.navigate('/helper-details'), 300);
             } else {
                 Toast.show({
                     type: 'error',
@@ -211,6 +211,7 @@ export default function AddHelper() {
                         }}
                         dropDownContainerStyle={{
                             backgroundColor: isDark ? '#18181b' : '#fff',
+                            borderColor: isDark ? '#52525b' : '#d1d5db',
                         }}
                     />
 

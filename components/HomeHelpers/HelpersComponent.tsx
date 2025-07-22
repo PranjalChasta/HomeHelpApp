@@ -2,16 +2,16 @@ import { Helper } from '@/components/Home/DashboardComponent';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import couchdb from '@/services/couchdb';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function Helpers() {
+export default function Helpers({ params }: any) {
     const [helpers, setHelpers] = React.useState<Helper[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
+    const [isLoading, setIsLoading] = React.useState(false);
     const router = useRouter();
-    const params = useLocalSearchParams();
+
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
@@ -23,17 +23,19 @@ export default function Helpers() {
         fetchHelpers();
     }, [params?.role]);
 
-    const fetchHelpers = async () => {
+    // useEffect(() => {
+    //     fetchHelpers();
+    // }, [helpers]);
+
+    const fetchHelpers = useCallback(async () => {
         setIsLoading(true);
         try {
             if (params?.role) {
                 const selectorData = {
                     role: params?.role,
-                    type: "helper"
+                    type: 'helper',
                 };
-                const result = await couchdb.findByRole({
-                    selector: selectorData
-                });
+                const result = await couchdb.findByRole({ selector: selectorData });
                 setHelpers(result?.docs);
             } else {
                 const result = await couchdb.getAllDocs();
@@ -45,8 +47,14 @@ export default function Helpers() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [params?.role]); // dependencies
 
+    // Call when screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            fetchHelpers();
+        }, [fetchHelpers])
+    );
     const renderHelperItem = ({ item }: { item: Helper }) => (
         <TouchableOpacity
             style={[
@@ -55,7 +63,7 @@ export default function Helpers() {
             ]}
             onPress={() => {
                 // Navigate to helper details
-                router.push({
+                router.navigate({
                     pathname: '/helper-details',
                     params: { id: item._id, name: item.name, role: item.role }
                 });

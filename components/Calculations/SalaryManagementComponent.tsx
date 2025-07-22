@@ -1,31 +1,37 @@
 import db from '@/services/couchdb';
 import { RoleIcon } from '@/utils/roleIcons';
 import { calculateSalary } from '@/utils/salaryCalculator';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
-export default function SalaryManagement() {
+export default function SalaryManagement({ netAmount = 0, netDirection = null }: any) {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
-    type Summary = { present: number; totalLeaves: number; deductions: number; finalSalary: number };
+    type Summary = {
+        present: number;
+        totalLeaves: number;
+        unpaidLeaves: number;
+        deductions: number;
+        finalSalary: number,
+        netAmt: number,
+        netDir: string
+    };
     const [summary, setSummary] = useState<Summary | null>(null);
     const [loading, setLoading] = useState(false);
-    type Helper = { name: string; monthly_salary: number; role?: string;[key: string]: any };
-    const [helper, setHelper] = useState<Helper | null>(null);
 
     useEffect(() => {
         generateSummary();
     }, [id]);
 
     const generateSummary = async () => {
+        setLoading(true);
         try {
             const helperDoc = await db.getDoc(id as string);
-            setHelper(helperDoc);
             const now = new Date();
             const year = now.getFullYear();
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -49,8 +55,10 @@ export default function SalaryManagement() {
             const totalDays = new Date(year, monthNumber + 1, 0).getDate();
             const present = totalDays;
 
-            const salary = calculateSalary(helperDoc.monthly_salary, present, leaveCount, totalDays);
-            setSummary({ present, totalLeaves: leaveCount, ...salary });
+            const salary = calculateSalary(helperDoc.monthly_salary, present, leaveCount, totalDays, netAmount, netDirection);
+            const unPaid = leaveCount > 2 ? leaveCount - 2 : 0;
+            setSummary({ ...salary, present, totalLeaves: leaveCount, unpaidLeaves: unPaid, netAmt: netAmount, netDir: netDirection });
+            setLoading(false);
         } catch (err) {
             console.error(err);
         }
@@ -64,38 +72,55 @@ export default function SalaryManagement() {
             {loading && summary ? (
                 <ActivityIndicator size="large" color={isDark ? '#818cf8' : '#6366f1'} />
             ) : (
-                summary && (<>
-                    <View style={styles.detailRow}>
-                        <Ionicons name="calendar-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Present:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary?.present}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <Ionicons name="card-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Paid Leave:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{2}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <RoleIcon role="Absent" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Unpaid Leave:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves > 2 ? summary.totalLeaves - 2 : summary.totalLeaves}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <RoleIcon role="Leave" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Leave Taken:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <RoleIcon role="Deduction" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Deductions:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.deductions.toFixed(2)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <RoleIcon role="Total Salary" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
-                        <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Final Salary:</Text>
-                        <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.finalSalary}</Text>
-                    </View>
-                </>)
+                summary && (
+                    <>
+                        <View style={styles.detailRow}>
+                            <Ionicons name="calendar-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Present:</Text>
+                            <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary?.present}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Ionicons name="card-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Paid Leaves:</Text>
+                            <Text style={[styles.detailValue, { color: '#16a34a' }]}>{2}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <RoleIcon role="Absent" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Unpaid Leave:</Text>
+                            <Text style={[styles.detailValue, { color: '#dc2626' }]}>{summary.unpaidLeaves}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <RoleIcon role="Leave" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Leave Taken:</Text>
+                            <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <RoleIcon role="Deduction" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Leave Deductions:</Text>
+                            <Text style={[styles.detailValue, { color: '#dc2626' }]}>₹ {summary.deductions.toFixed(2)}</Text>
+                        </View>
+                        {
+                            summary?.netAmt !== 0 && summary?.netDir !== null && (
+                                <View style={styles.detailRow}>
+                                    <MaterialCommunityIcons name="cash-100" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                                    <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Net Transaction:</Text>
+                                    <Text
+                                        style={[styles.detailValue, {
+                                            color: summary?.netDir === 'take' ? '#dc2626' : '#16a34a',
+                                        }]}
+                                    >
+                                        ₹ {summary.netAmt.toFixed(2)}
+                                    </Text>
+                                </View>
+                            )
+                        }
+                        <View style={styles.detailRow}>
+                            <RoleIcon role="Total Salary" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Final Salary:</Text>
+                            <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>₹ {summary.finalSalary}</Text>
+                        </View>
+                    </>
+                )
             )}
         </SafeAreaView>
     );

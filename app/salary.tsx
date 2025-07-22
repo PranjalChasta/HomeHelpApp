@@ -1,7 +1,9 @@
-import SalaryManagement from '@/components/Calculations/SalaryManagementComponent';
+import HelperDetailPage from '@/components/HomeHelpers/HelperDetailsComponent';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function Salary() {
+    const params = useLocalSearchParams();
     return (
-        <SalaryManagement />
+        <HelperDetailPage params={params} />
     );
 }

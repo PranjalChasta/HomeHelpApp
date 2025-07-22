@@ -2,7 +2,7 @@ import { default as couchdb } from '@/services/couchdb';
 import { dashboardStyles } from '@/styles/dashboardStyles';
 import { RoleIcon } from '@/utils/roleIcons';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     ImageBackground,
@@ -21,6 +21,7 @@ export type Helper = {
 };
 
 export default function Dashboard() {
+    const navigation = useNavigation();
     const [helpers, setHelpers] = useState<Helper[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [roles, setRoles] = useState<string[]>([]);
@@ -41,6 +42,7 @@ export default function Dashboard() {
             setHelpers(helperItems);
             const uniqueRoles = Array.from(new Set(helperItems.map(h => h.role)));
             setRoles(uniqueRoles);
+            navigation.setParams(undefined);
         } catch (error) {
             console.error('Error fetching helpers:', error);
         } finally {
@@ -103,29 +105,20 @@ export default function Dashboard() {
 
                     {/* Stats Overview */}
                     <View style={dashboardStyles.statsContainer}>
-                        <View
-                            style={[
-                                dashboardStyles.statCard,
-                                { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
-                            ]}
-                        >
+                        <TouchableOpacity onPress={() => router.push('/helpers')} style={[dashboardStyles.statCard, { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }]}>
                             <View style={[dashboardStyles.statIconContainer, { backgroundColor: '#6366f1' }]}>
                                 <Ionicons name="people" size={20} color="#ffffff" />
                             </View>
                             <Text style={[dashboardStyles.statValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
                                 {totalHelpers}
                             </Text>
+
                             <Text style={[dashboardStyles.statLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                                 Total Helpers
                             </Text>
-                        </View>
+                        </TouchableOpacity>
 
-                        <View
-                            style={[
-                                dashboardStyles.statCard,
-                                { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
-                            ]}
-                        >
+                        <TouchableOpacity onPress={() => router.push('/helpers')} style={[dashboardStyles.statCard, { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }]}>
                             <View style={[dashboardStyles.statIconContainer, { backgroundColor: '#10b981' }]}>
                                 <Ionicons name="checkmark-circle" size={20} color="#ffffff" />
                             </View>
@@ -135,7 +128,7 @@ export default function Dashboard() {
                             <Text style={[dashboardStyles.statLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                                 Active Helpers
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Roles Overview */}
@@ -289,7 +282,7 @@ export default function Dashboard() {
                                         onPress={() => {
                                             router.push({
                                                 pathname: `/salary`,
-                                                params: { id: helper._id, name: helper.name }
+                                                params: { id: helper._id, name: helper.name, role: helper.role, salary: helper.monthly_salary }
                                             });
                                         }}
                                     >

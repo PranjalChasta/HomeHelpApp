@@ -27,6 +27,7 @@ export const dashboardStyles = StyleSheet.create({
     subtitle: {
         fontSize: 16,
         marginTop: 4,
+        fontWeight: 700
     },
     profileButton: {
         width: 44,
@@ -73,13 +74,14 @@ export const dashboardStyles = StyleSheet.create({
     statLabel: {
         fontSize: 12,
         textAlign: 'center',
+        fontWeight: 500
     },
     quickActionsContainer: {
         marginBottom: 24,
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: '700',
         marginBottom: 16,
     },
     quickActions: {

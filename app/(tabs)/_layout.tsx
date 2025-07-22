@@ -57,12 +57,19 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="helpers"
+        initialParams={undefined}
         options={{
           title: 'Helpers',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('helpers', {});
+          },
+        })}
       />
       <Tabs.Screen
         name="reports"

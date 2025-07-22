@@ -23,6 +23,7 @@ export const roleIconMap: Record<string, { lib: string; name: string }> = {
     ACService: { lib: 'MaterialCommunityIcons', name: 'air-conditioner' },
     PestControl: { lib: 'MaterialCommunityIcons', name: 'bug' },
     Water: { lib: 'MaterialCommunityIcons', name: 'water-pump' },
+    Money: { lib: 'MaterialCommunityIcons', name: 'cash' },
 
     // Stat icons (reused from the existing icon sets)
     Leave: { lib: 'MaterialCommunityIcons', name: 'calendar-check' },     // reuse for 'Leave'
