@@ -31,7 +31,7 @@ export const reportStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 2,
+        // elevation: 2,
     },
     iconContainer: {
         width: 44,
@@ -58,7 +58,7 @@ export const reportStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 2,
+        // elevation: 2,
     },
     chartTitle: {
         fontSize: 18,
@@ -118,6 +118,7 @@ export const reportStyles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 150,
+        marginVertical: 10
     },
     gridLine: {
         position: 'absolute',
@@ -127,14 +128,15 @@ export const reportStyles = StyleSheet.create({
         borderBottomWidth: 1,
     },
     lineChart: {
-        height: 150,
-        position: 'relative',
+        height: 160,
+        overflow: 'visible',
+        marginHorizontal: 20
     },
     lineChartInner: {
-        flexDirection: 'row',
-        height: '100%',
-        alignItems: 'flex-end',
         position: 'relative',
+        height: 160,
+        flexDirection: 'row',
+        alignItems: 'flex-end',
     },
     lineSegment: {
         width: 40,

@@ -179,36 +179,6 @@ export default function Dashboard() {
                                 </Text>
                             </TouchableOpacity>
 
-                            {/* <TouchableOpacity
-                style={[
-                  dashboardStyles.actionCard,
-                  { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)', gap: 10 }
-                ]}
-                onPress={() => router.push('/attendance')}
-              >
-                <View style={[dashboardStyles.actionIconContainer, { backgroundColor: '#10b981' }]}>
-                  <Ionicons name="calendar" size={24} color="#ffffff" />
-                </View>
-                <Text style={[dashboardStyles.actionLabel, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                  Attendance
-                </Text>
-              </TouchableOpacity> */}
-
-                            {/* <TouchableOpacity
-                style={[
-                  dashboardStyles.actionCard,
-                  { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
-                ]}
-                onPress={() => router.push('/salary')}
-              >
-                <View style={[dashboardStyles.actionIconContainer, { backgroundColor: '#ef4444' }]}>
-                  <Ionicons name="cash" size={24} color="#ffffff" />
-                </View>
-                <Text style={[dashboardStyles.actionLabel, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                  Salary
-                </Text>
-              </TouchableOpacity> */}
-
                             <TouchableOpacity
                                 style={[
                                     dashboardStyles.actionCard,
@@ -248,7 +218,7 @@ export default function Dashboard() {
                                 ]}
                                 onPress={() => {
                                     router.push({
-                                        pathname: `/attendance`,
+                                        pathname: `/helper-details`,
                                         params: { id: helper._id, name: helper.name, role: helper.role }
                                     });
                                 }}

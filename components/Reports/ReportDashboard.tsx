@@ -1,8 +1,13 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
+import couchdb from '@/services/couchdb';
+import { reportStyles } from '@/styles/ReportStyles';
+import { AttendanceData, getCurrentMonth, getSalaryHistory, getTotalDaysInCurrentMonth, months, SalaryDataType } from '@/utils/salaryCalculator';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Dimensions, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Helper } from '../Home/DashboardComponent';
 
 // Mock data for reports
 const attendanceData = [
@@ -14,87 +19,145 @@ const attendanceData = [
     { month: 'Jun', present: 28, absent: 2 },
 ];
 
-const salaryData = [
-    { month: 'Jan', amount: 12000 },
-    { month: 'Feb', amount: 12000 },
-    { month: 'Mar', amount: 12500 },
-    { month: 'Apr', amount: 12500 },
-    { month: 'May', amount: 13000 },
-    { month: 'Jun', amount: 13000 },
-];
+// const salaryData = [
+//     { month: 'Jan', amount: 12000 },
+//     { month: 'Feb', amount: 12000 },
+//     { month: 'Mar', amount: 12500 },
+//     { month: 'Apr', amount: 12500 },
+//     { month: 'May', amount: 13000 },
+//     { month: 'Jun', amount: 13000 },
+// ];
 
 export default function ReportDashboard() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
     const screenWidth = Dimensions.get('window').width;
 
-    // Calculate max values for scaling
-    const maxSalary = Math.max(...salaryData.map(item => item.amount));
-    const maxAttendance = 31; // Maximum days in a month
+    const [totalHelpers, setTotalHelpers] = useState(0);
+    const [monthlyExpense, setMonthlyExpense] = useState(0);
+    const [maxSalary, setMaxSalary] = useState<number>(0);
+    const [attendanceRate, setAttendanceRate] = useState<number>(0);
+    const [maxAttendance] = useState<number>(getTotalDaysInCurrentMonth());
+    const [salaryData, setSalaryData] = useState<SalaryDataType[]>([]);
+    const [sortedSalary, setSortedSalary] = useState<SalaryDataType[]>([]);
+    const [monthsLabel, setMonthsLabel] = useState<any>([]);
+    // const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
+
+
+    const fetchHelpers = useCallback(async () => {
+        try {
+            const result = await couchdb.getAllDocs();
+            const helperItems = result.filter((item: any) => item.role) as Helper[];
+            const attendanceDocs = result.filter((d: any) => d.type === 'attendance') as AttendanceData[];
+            const currentMonth = getCurrentMonth();
+
+            const totalSalary = helperItems.reduce((sum, h) => sum + (h.monthly_salary?.find((item: any) => item.month === currentMonth)?.salary || 0), 0);
+            setMonthlyExpense(totalSalary);
+
+            const total = helperItems.length;
+            setTotalHelpers(total);
+
+            const attendancePercentage = maxAttendance > 0 ? Math.round((attendanceDocs.length / maxAttendance) * 100) : 0;
+            setAttendanceRate(attendancePercentage);
+
+            const salary = getSalaryHistory(helperItems, months);
+            setSalaryData(salary);
+        } catch (error) {
+            console.error('Error fetching helpers:', error);
+        } finally {
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchHelpers();
+        }, [fetchHelpers])
+    );
+
+    const fetchSalaryData = () => {
+        const selectedHelper = 'Jayshree Ben'; // Or based on selection
+        const filteredSalaryData = salaryData.filter(item => item.name === selectedHelper);
+
+
+        const sortedSalaryData = [...filteredSalaryData].sort((a, b) => {
+            const monthA = a.month?.trim();
+            const monthB = b.month?.trim();
+            return months.indexOf(monthA) - months.indexOf(monthB);
+        });
+        setSortedSalary(sortedSalaryData);
+        const maxSalary = Math.max(...sortedSalaryData.map(item => item?.amount));
+        setMaxSalary(maxSalary);
+        // const months: any[] = sortedSalaryData.map(item => item.month);
+        setMonthsLabel(months);
+    }
+
+    useEffect(() => {
+        fetchSalaryData();
+    }, [salaryData]);
 
     return (
         <SafeAreaView
             style={[
-                styles.container,
+                reportStyles.container,
                 { backgroundColor: isDark ? '#111827' : '#e3e3e4ff' }
             ]}
         >
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+            <View style={reportStyles.header}>
+                <Text style={[reportStyles.title, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
                     Reports & Analytics
                 </Text>
             </View>
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={reportStyles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Summary Cards */}
-                <View style={styles.summaryContainer}>
+                <View style={reportStyles.summaryContainer}>
                     <View
                         style={[
-                            styles.summaryCard,
+                            reportStyles.summaryCard,
                             { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
                         ]}
                     >
-                        <View style={[styles.iconContainer, { backgroundColor: '#10b981' }]}>
+                        <View style={[reportStyles.iconContainer, { backgroundColor: '#10b981' }]}>
                             <Ionicons name="people" size={24} color="#ffffff" />
                         </View>
-                        <Text style={[styles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                            4
+                        <Text style={[reportStyles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+                            {totalHelpers}
                         </Text>
-                        <Text style={[styles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                        <Text style={[reportStyles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                             Total Helpers
                         </Text>
                     </View>
 
                     <View
                         style={[
-                            styles.summaryCard,
+                            reportStyles.summaryCard,
                             { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
                         ]}
                     >
-                        <View style={[styles.iconContainer, { backgroundColor: '#6366f1' }]}>
+                        <View style={[reportStyles.iconContainer, { backgroundColor: '#6366f1' }]}>
                             <Ionicons name="calendar" size={24} color="#ffffff" />
                         </View>
-                        <Text style={[styles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                            95%
+                        <Text style={[reportStyles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+                            {attendanceRate}%
                         </Text>
-                        <Text style={[styles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                        <Text style={[reportStyles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                             Attendance Rate
                         </Text>
                     </View>
 
                     <View
                         style={[
-                            styles.summaryCard,
+                            reportStyles.summaryCard,
                             { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
                         ]}
                     >
-                        <View style={[styles.iconContainer, { backgroundColor: '#ef4444' }]}>
+                        <View style={[reportStyles.iconContainer, { backgroundColor: '#ef4444' }]}>
                             <Ionicons name="cash" size={24} color="#ffffff" />
                         </View>
-                        <Text style={[styles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                            ₹49,500
+                        <Text style={[reportStyles.summaryValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+                            ₹{monthlyExpense.toLocaleString()}
                         </Text>
-                        <Text style={[styles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                        <Text style={[reportStyles.summaryLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                             Monthly Expense
                         </Text>
                     </View>
@@ -103,21 +166,21 @@ export default function ReportDashboard() {
                 {/* Attendance Chart */}
                 <View
                     style={[
-                        styles.chartContainer,
+                        reportStyles.chartContainer,
                         { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
                     ]}
                 >
-                    <Text style={[styles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+                    <Text style={[reportStyles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
                         Attendance Overview
                     </Text>
 
-                    <View style={styles.barChartContainer}>
+                    <View style={reportStyles.barChartContainer}>
                         {attendanceData.map((item, index) => (
-                            <View key={index} style={styles.barGroup}>
-                                <View style={styles.barContainer}>
+                            <View key={index} style={reportStyles.barGroup}>
+                                <View style={reportStyles.barContainer}>
                                     <View
                                         style={[
-                                            styles.bar,
+                                            reportStyles.bar,
                                             {
                                                 height: (item.present / maxAttendance) * 150,
                                                 backgroundColor: '#6366f1'
@@ -126,7 +189,7 @@ export default function ReportDashboard() {
                                     />
                                     <View
                                         style={[
-                                            styles.bar,
+                                            reportStyles.bar,
                                             {
                                                 height: (item.absent / maxAttendance) * 150,
                                                 backgroundColor: '#ef4444',
@@ -135,23 +198,23 @@ export default function ReportDashboard() {
                                         ]}
                                     />
                                 </View>
-                                <Text style={[styles.barLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                                <Text style={[reportStyles.barLabel, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                                     {item.month}
                                 </Text>
                             </View>
                         ))}
                     </View>
 
-                    <View style={styles.legendContainer}>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendColor, { backgroundColor: '#6366f1' }]} />
-                            <Text style={[styles.legendText, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                    <View style={reportStyles.legendContainer}>
+                        <View style={reportStyles.legendItem}>
+                            <View style={[reportStyles.legendColor, { backgroundColor: '#6366f1' }]} />
+                            <Text style={[reportStyles.legendText, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                                 Present
                             </Text>
                         </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
-                            <Text style={[styles.legendText, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
+                        <View style={reportStyles.legendItem}>
+                            <View style={[reportStyles.legendColor, { backgroundColor: '#ef4444' }]} />
+                            <Text style={[reportStyles.legendText, { color: isDark ? '#d1d5db' : '#4b5563' }]}>
                                 Absent
                             </Text>
                         </View>
@@ -161,265 +224,108 @@ export default function ReportDashboard() {
                 {/* Salary Chart */}
                 <View
                     style={[
-                        styles.chartContainer,
+                        reportStyles.chartContainer,
                         { backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)' }
                     ]}
                 >
-                    <Text style={[styles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
+                    <Text style={[reportStyles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
                         Salary Trends
                     </Text>
 
-                    <View style={styles.lineChartContainer}>
-                        {/* Line chart background grid */}
-                        <View style={styles.chartGrid}>
-                            {[0, 1, 2, 3].map((i) => (
-                                <View
-                                    key={i}
-                                    style={[
-                                        styles.gridLine,
-                                        { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
-                                    ]}
-                                />
-                            ))}
-                        </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <View style={reportStyles.lineChartContainer}>
+                            {/* Line chart background grid */}
+                            <View style={reportStyles.chartGrid}>
+                                {months.map((i) => (
+                                    <View
+                                        key={i}
+                                        style={[
+                                            reportStyles.gridLine,
+                                            { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
+                                        ]}
+                                    />
+                                ))}
+                            </View>
 
-                        {/* Line chart */}
-                        <View style={styles.lineChart}>
-                            <View style={styles.lineChartInner}>
-                                {salaryData.map((item, index) => {
-                                    const nextItem = salaryData[index + 1];
-                                    if (!nextItem) return null;
+                            {/* Line chart */}
+                            <View style={reportStyles.lineChart}>
+                                <View style={reportStyles.lineChartInner}>
+                                    {sortedSalary.map((item, index) => {
+                                        const nextItem = sortedSalary[index + 1];
+                                        if (!nextItem) return null;
 
-                                    const startHeight = (item.amount / maxSalary) * 150;
-                                    const endHeight = (nextItem.amount / maxSalary) * 150;
+                                        const startHeight = (item?.amount / maxSalary) * 150;
+                                        const endHeight = (nextItem?.amount / maxSalary) * 150;
+                                        const heightDiff = endHeight - startHeight;
 
-                                    return (
-                                        <View key={index} style={styles.lineSegment}>
-                                            <View
-                                                style={[
-                                                    styles.line,
+                                        return (
+                                            <View key={index} style={reportStyles.lineSegment}>
+                                                <View
+                                                    style={[
+                                                        reportStyles.line,
+                                                        {
+                                                            backgroundColor: '#10b981',
+                                                            height: 2,
+                                                            width: 40,
+                                                            position: 'absolute',
+                                                            bottom: startHeight,
+                                                            transform: [
+                                                                { rotate: `${Math.atan2(heightDiff, 40)}rad` },
+                                                                { scaleX: Math.sqrt(40 * 40 + heightDiff * heightDiff) / 40 }
+                                                            ],
+                                                        }
+                                                    ]}
+                                                />
+                                                <View
+                                                    style={[
+                                                        reportStyles.dot,
+                                                        {
+                                                            backgroundColor: '#10b981',
+                                                            transform: [{ translateY: -startHeight }]
+                                                        }
+                                                    ]}
+                                                />
+                                            </View>
+                                        );
+                                    })}
+                                    {/* Last dot */}
+                                    <View
+                                        style={[
+                                            reportStyles.dot,
+                                            {
+                                                backgroundColor: '#10b981',
+                                                transform: [
                                                     {
-                                                        backgroundColor: '#10b981',
-                                                        transform: [
-                                                            { translateY: -startHeight },
-                                                            { rotate: Math.atan2(endHeight - startHeight, 40) + 'rad' },
-                                                            { scaleX: Math.sqrt(Math.pow(40, 2) + Math.pow(endHeight - startHeight, 2)) / 40 }
-                                                        ]
+                                                        translateY:
+                                                            -(sortedSalary[sortedSalary.length - 1]?.amount / maxSalary) * 150
                                                     }
-                                                ]}
-                                            />
-                                            <View
-                                                style={[
-                                                    styles.dot,
-                                                    {
-                                                        backgroundColor: '#10b981',
-                                                        transform: [{ translateY: -startHeight }]
-                                                    }
-                                                ]}
-                                            />
-                                        </View>
-                                    );
-                                })}
-                                <View
-                                    style={[
-                                        styles.dot,
-                                        {
-                                            backgroundColor: '#10b981',
-                                            transform: [{ translateY: -(salaryData[salaryData.length - 1].amount / maxSalary) * 150 }],
-                                            right: 0
-                                        }
-                                    ]}
-                                />
+                                                ],
+                                                right: 0
+                                            }
+                                        ]}
+                                    />
+                                </View>
+                            </View>
+
+                            {/* X-axis labels */}
+                            <View style={reportStyles.xAxisLabels}>
+                                {months.map((item, index) => (
+                                    <Text
+                                        key={index}
+                                        style={[
+                                            reportStyles.xAxisLabel,
+                                            { color: isDark ? '#d1d5db' : '#4b5563' }
+                                        ]}
+                                    >
+                                        {item}
+                                    </Text>
+                                ))}
                             </View>
                         </View>
+                    </ScrollView>
 
-                        {/* X-axis labels */}
-                        <View style={styles.xAxisLabels}>
-                            {salaryData.map((item, index) => (
-                                <Text
-                                    key={index}
-                                    style={[
-                                        styles.xAxisLabel,
-                                        { color: isDark ? '#d1d5db' : '#4b5563' }
-                                    ]}
-                                >
-                                    {item.month}
-                                </Text>
-                            ))}
-                        </View>
-                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-    },
-    scrollView: {
-        flex: 1,
-        paddingHorizontal: 16,
-    },
-    summaryContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-    },
-    summaryCard: {
-        flex: 1,
-        borderRadius: 16,
-        padding: 16,
-        marginHorizontal: 4,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        // elevation: 2,
-    },
-    iconContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    summaryValue: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    summaryLabel: {
-        fontSize: 12,
-        textAlign: 'center',
-    },
-    chartContainer: {
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        // elevation: 2,
-    },
-    chartTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 16,
-    },
-    barChartContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        height: 180,
-        marginBottom: 8,
-    },
-    barGroup: {
-        alignItems: 'center',
-    },
-    barContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        height: 150,
-    },
-    bar: {
-        width: 12,
-        borderRadius: 6,
-        marginHorizontal: 2,
-    },
-    barLabel: {
-        marginTop: 8,
-        fontSize: 12,
-    },
-    legendContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 16,
-    },
-    legendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 8,
-    },
-    legendColor: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 4,
-    },
-    legendText: {
-        fontSize: 12,
-    },
-    lineChartContainer: {
-        height: 200,
-        position: 'relative',
-    },
-    chartGrid: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 150,
-    },
-    gridLine: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 1,
-        borderBottomWidth: 1,
-    },
-    lineChart: {
-        height: 150,
-        position: 'relative',
-    },
-    lineChartInner: {
-        flexDirection: 'row',
-        height: '100%',
-        alignItems: 'flex-end',
-        position: 'relative',
-    },
-    lineSegment: {
-        width: 40,
-        height: '100%',
-        position: 'relative',
-    },
-    line: {
-        position: 'absolute',
-        height: 3,
-        width: 40,
-        bottom: 0,
-        left: 0,
-        borderRadius: 1.5,
-    },
-    dot: {
-        position: 'absolute',
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        bottom: 0,
-        left: 0,
-        marginLeft: -4,
-    },
-    xAxisLabels: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 8,
-    },
-    xAxisLabel: {
-        fontSize: 12,
-        width: 40,
-        textAlign: 'center',
-    },
-});

@@ -51,7 +51,7 @@ export default function SettingDashboard() {
 
     const handleToggle = (id: string, value: boolean) => {
         setSettings(prev => ({ ...prev, [id]: value }));
-        Appearance.setColorScheme(value ? 'dark' : 'light');
+        if (id === 'darkMode') Appearance.setColorScheme(value ? 'dark' : 'light');
         // Here you would implement actual functionality for these toggles
         // For example, changing the theme system-wide
     };

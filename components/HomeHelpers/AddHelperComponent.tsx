@@ -1,7 +1,8 @@
 import db, { checkConnection } from '@/services/couchdb';
+import { getMonthName, months } from '@/utils/salaryCalculator';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     KeyboardAvoidingView,
@@ -19,12 +20,31 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import Toast from 'react-native-toast-message';
 import uuid from 'react-native-uuid';
+import CustomDropdown from '../common/CustomDropdown';
 
 export default function AddHelper() {
     const { control, handleSubmit, reset, setValue } = useForm();
     const router = useRouter();
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
+
+    const monthItems = months.map(month => ({ label: month, value: month }));
+    const today = new Date();
+    const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonth = getMonthName(currentMonthString);
+
+    const [monthValue, setMonthValue] = useState(currentMonth);
+    const [monthItemsState, setMonthItemsState] = useState(monthItems);
+
+    // Dropdown state
+    const [roles, setRoles] = React.useState<string[]>([]);
+    const [roleItems, setRoleItems] = React.useState<any[]>([]);
+    const [open, setOpen] = React.useState(false);
+    const [roleValue, setRoleValue] = React.useState<string | null>(null);
+    const [newRole, setNewRole] = React.useState('');
+
+    const [modalVisible, setModalVisible] = React.useState(false);
+    const [newRoleInput, setNewRoleInput] = React.useState('');
 
     const onSubmit = async (data: any) => {
         try {
@@ -33,8 +53,15 @@ export default function AddHelper() {
                 type: 'helper',
                 name: data.name,
                 role: data.role,
-                monthly_salary: parseFloat(data.salary),
+                monthly_salary: [
+                    {
+                        month: monthValue, // from state
+                        salary: parseFloat(data.salary),
+                        updated_at: new Date().toISOString()
+                    }
+                ],
             };
+
             const isConnected = await checkConnection();
             if (isConnected) {
                 await db.createDoc(doc);
@@ -65,15 +92,7 @@ export default function AddHelper() {
         }
     };
 
-    // Dropdown state
-    const [roles, setRoles] = React.useState<string[]>([]);
-    const [roleItems, setRoleItems] = React.useState<any[]>([]);
-    const [open, setOpen] = React.useState(false);
-    const [roleValue, setRoleValue] = React.useState<string | null>(null);
-    const [newRole, setNewRole] = React.useState('');
 
-    const [modalVisible, setModalVisible] = React.useState(false);
-    const [newRoleInput, setNewRoleInput] = React.useState('');
 
 
     // Fetch roles from CouchDB
@@ -93,14 +112,10 @@ export default function AddHelper() {
         setValue('role', roleValue || '');
     }, [roleValue]);
 
-    // Add new role to dropdown
-    const handleAddRole = () => {
-        if (newRole && !roles.includes(newRole)) {
-            setRoles(prev => [...prev, newRole]);
-            setRoleItems(prev => [...prev, { label: newRole, value: newRole }]);
-            setRoleValue(newRole);
-            setNewRole('');
-        }
+    // Add new month to dropdown
+    const handleMonthChange = (month: any) => {
+        console.log('handleMonthChange', month)
+        setMonthValue(month);
     };
 
     const handleAddRoleFromModal = () => {
@@ -241,6 +256,43 @@ export default function AddHelper() {
                                 keyboardType="numeric"
                             />
                         )}
+                    />
+
+                    {/* <Text style={[
+                        styles.label,
+                        { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
+                    ]}>
+                        Month
+                    </Text> */}
+                    {/* <DropDownPicker
+                        open={monthOpen}
+                        value={monthValue}
+                        items={monthItemsState}
+                        setOpen={setMonthOpen}
+                        setValue={setMonthValue}
+                        setItems={setMonthItemsState}
+                        placeholder="Select a month"
+                        style={{
+                            backgroundColor: isDark ? '#18181b' : '#f9fafb',
+                            borderColor: isDark ? '#52525b' : '#d1d5db',
+                            minHeight: 44,
+                        }}
+                        textStyle={{
+                            color: isDark ? '#f9fafb' : '#111827',
+                        }}
+                        dropDownContainerStyle={{
+                            backgroundColor: isDark ? '#18181b' : '#fff',
+                            borderColor: isDark ? '#52525b' : '#d1d5db',
+                        }}
+                    /> */}
+                    <CustomDropdown
+                        label="Month"
+                        value={monthValue}
+                        onSelect={handleMonthChange}
+                        items={monthItemsState}
+                        placeholder="Select a month"
+                        dark={isDark}
+                        containerStyle={{ marginTop: 15 }}
                     />
 
                     {/* Button */}

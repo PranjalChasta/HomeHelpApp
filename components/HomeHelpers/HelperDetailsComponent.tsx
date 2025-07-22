@@ -1,8 +1,9 @@
 import db from '@/services/couchdb';
 import { RoleIcon } from '@/utils/roleIcons';
+import { getCurrentMonth, months } from '@/utils/salaryCalculator';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -22,12 +23,13 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import SalaryManagement from '../Calculations/SalaryManagementComponent';
+import CustomDropdown from '../common/CustomDropdown';
 
 type HelperDoc = {
     _id: string;
     helper_id: string;
     type: string;
-    monthly_salary?: number;
+    monthly_salary?: [];
 };
 
 export default function HelperDetailPage({ params }: any) {
@@ -59,7 +61,17 @@ export default function HelperDetailPage({ params }: any) {
         note: '',
     });
 
-    const fetchDetails = async () => {
+    const monthItems = months.map(month => ({ label: month, value: month }));
+    const currentMonth = getCurrentMonth();
+
+    const [monthValue, setMonthValue] = useState(currentMonth);
+    const [monthItemsState] = useState(monthItems);
+
+    const handleMonthChange = (month: any) => {
+        setMonthValue(month);
+    };
+
+    const fetchDetails = useCallback(async () => {
         setLoading(true);
         try {
             // Fetch attendance count
@@ -71,13 +83,16 @@ export default function HelperDetailPage({ params }: any) {
 
             // Fetch salary (assuming monthly_salary is in params or fetch from db)
             const helperDoc = attRes.find((doc) => doc._id === params.id);
-            setSalary(helperDoc?.monthly_salary || 0);
+            setSalary(
+                (helperDoc?.monthly_salary as { month: string; salary: number }[] | undefined)
+                    ?.find(item => item.month === currentMonth)?.salary || 0
+            );
         } catch (err) {
             setAttendance(0);
             setSalary(0);
         }
         setLoading(false);
-    };
+    }, [params?.id, netAmount, netDirection]);
 
     const fetchTransactionDetails = async () => {
         setLoading(true);
@@ -147,9 +162,41 @@ export default function HelperDetailPage({ params }: any) {
         }
     }
 
-    useEffect(() => {
-        fetchDetails();
-    }, [params.id]);
+    const updateHelper = async () => {
+        try {
+            const doc = await db.getDoc(params.id);
+            const updatedDoc = {
+                ...doc,
+                name: editedName,
+                role: editedRole,
+                monthly_salary: [
+                    ...doc.monthly_salary,
+                    {
+                        month: monthValue, // from state
+                        salary: parseFloat(editedSalary),
+                        updated_at: new Date().toISOString()
+                    }
+                ],
+            };
+            await db.updateDoc(params.id, updatedDoc);
+            params.name = editedName;
+            params.role = editedRole;
+            setSalary(parseInt(editedSalary));
+            setEditModalVisible(false);
+            Toast.show({
+                type: 'success',
+                text1: 'Successfully updated!'
+            });
+        } catch (err) {
+            Alert.alert('Error', 'Failed to update');
+        }
+    }
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchDetails();
+        }, [fetchDetails])
+    );
 
     useEffect(() => {
         fetchTransactionDetails();
@@ -303,7 +350,7 @@ export default function HelperDetailPage({ params }: any) {
                 <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
                     <View style={[styles.modalContent, {
                         position: 'absolute',
-                        top: Platform.OS === 'ios' ? dotsPosition.y + 100 : dotsPosition.y,
+                        top: Platform.OS === 'ios' ? dotsPosition.y + 30 : dotsPosition.y,
                         left: Platform.OS === 'ios' ? dotsPosition.x - 150 : dotsPosition.x - 140,
                         width: 'auto',
                         backgroundColor: isDark ? '#fff' : '#111827',
@@ -401,26 +448,35 @@ export default function HelperDetailPage({ params }: any) {
                         </TouchableOpacity>
                         <Text style={styles.modalTitle}>Edit Helper</Text>
 
-                        <Text style={styles.inputLabel}>Name</Text>
+                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Name</Text>
                         <TextInput
                             value={editedName}
                             onChangeText={setEditedName}
                             style={styles.inputField}
                         />
 
-                        <Text style={styles.inputLabel}>Role</Text>
+                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Role</Text>
                         <TextInput
                             value={editedRole}
                             onChangeText={setEditedRole}
                             style={styles.inputField}
                         />
 
-                        <Text style={styles.inputLabel}>Monthly Salary</Text>
+                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Monthly Salary</Text>
                         <TextInput
                             value={editedSalary}
                             onChangeText={setEditedSalary}
                             keyboardType="numeric"
                             style={styles.inputField}
+                        />
+
+                        <CustomDropdown
+                            label="Month"
+                            value={monthValue}
+                            onSelect={handleMonthChange}
+                            items={monthItemsState}
+                            placeholder="Select a month"
+                            dark={!isDark}
                         />
                         <View style={styles.buttonRow}>
                             <TouchableOpacity
@@ -432,24 +488,7 @@ export default function HelperDetailPage({ params }: any) {
 
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: '#4f46e5' }]}
-                                onPress={async () => {
-                                    try {
-                                        const doc = await db.getDoc(params.id);
-                                        const updatedDoc = {
-                                            ...doc,
-                                            name: editedName,
-                                            role: editedRole,
-                                            monthly_salary: parseInt(editedSalary),
-                                        };
-                                        await db.updateDoc(params.id, updatedDoc);
-                                        params.name = editedName;
-                                        params.role = editedRole;
-                                        setSalary(parseInt(editedSalary));
-                                        setEditModalVisible(false);
-                                    } catch (err) {
-                                        Alert.alert('Error', 'Failed to update');
-                                    }
-                                }}
+                                onPress={() => updateHelper()}
                             >
                                 <Text style={[styles.buttonText, { color: '#fff' }]}>Save</Text>
                             </TouchableOpacity>
@@ -620,9 +659,9 @@ const styles = StyleSheet.create({
         color: '#111827',
     },
     inputLabel: {
-        fontSize: 14,
-        marginBottom: 4,
-        color: '#374151',
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 6,
     },
     inputField: {
         borderWidth: 1,

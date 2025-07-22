@@ -1,14 +1,13 @@
 import db from '@/services/couchdb';
 import { RoleIcon } from '@/utils/roleIcons';
-import { calculateSalary } from '@/utils/salaryCalculator';
+import { calculateSalary, getCurrentMonth } from '@/utils/salaryCalculator';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 export default function SalaryManagement({ netAmount = 0, netDirection = null }: any) {
     const { id } = useLocalSearchParams();
-    const router = useRouter();
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
@@ -24,11 +23,7 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
     const [summary, setSummary] = useState<Summary | null>(null);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        generateSummary();
-    }, [id]);
-
-    const generateSummary = async () => {
+    const generateSummary = useCallback(async () => {
         setLoading(true);
         try {
             const helperDoc = await db.getDoc(id as string);
@@ -47,22 +42,40 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
                 helper_id: id.toString(),
                 type: "attendance"
             };
-            const result = await db.find({
-                selector: selectorData
-            });
+
+            const result = await db.find({ selector: selectorData });
             const leaveCount = result.docs.filter((d: any) => d.status === 'leave').length;
-            const monthNumber = now.getMonth();
-            const totalDays = new Date(year, monthNumber + 1, 0).getDate();
+            const totalDays = new Date(year, now.getMonth() + 1, 0).getDate();
             const present = totalDays;
 
-            const salary = calculateSalary(helperDoc.monthly_salary, present, leaveCount, totalDays, netAmount, netDirection);
+            const currentMonth = getCurrentMonth();
+
+            const monthlySalary = (helperDoc.monthly_salary as { month: string; salary: number }[] | undefined)
+                ?.find(item => item.month === currentMonth)?.salary || 0;
+
+            const salary = calculateSalary(monthlySalary, present, leaveCount, totalDays, netAmount, netDirection);
             const unPaid = leaveCount > 2 ? leaveCount - 2 : 0;
-            setSummary({ ...salary, present, totalLeaves: leaveCount, unpaidLeaves: unPaid, netAmt: netAmount, netDir: netDirection });
-            setLoading(false);
+
+            setSummary({
+                ...salary,
+                present,
+                totalLeaves: leaveCount,
+                unpaidLeaves: unPaid,
+                netAmt: netAmount,
+                netDir: netDirection
+            });
         } catch (err) {
             console.error(err);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [id, netAmount, netDirection]);
+
+    useEffect(() => {
+        generateSummary();
+    }, [generateSummary]);
+
+
 
     return (
         <SafeAreaView>

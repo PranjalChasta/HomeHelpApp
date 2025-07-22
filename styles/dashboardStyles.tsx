@@ -3,7 +3,8 @@ import { StatusBar, StyleSheet } from "react-native";
 export const dashboardStyles = StyleSheet.create({
     container: {
         flex: 1,
-        marginTop: StatusBar.currentHeight
+        marginVertical: StatusBar.currentHeight,
+        marginBottom: 60
     },
     backgroundImage: {
         flex: 1,
