@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 // Create custom themes based on our color palette
 const CustomLightTheme = {
@@ -51,7 +52,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
-        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 3 }}>
           <Stack
             screenOptions={{
               headerStyle: {
@@ -105,6 +106,7 @@ export default function RootLayout() {
             />
           </Stack>
           <StatusBar hidden={false} style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <Toast position="top" topOffset={50} />
         </View>
       </ThemeProvider>
     </SafeAreaProvider>

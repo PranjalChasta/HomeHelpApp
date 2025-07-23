@@ -5,22 +5,24 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+    Keyboard,
     KeyboardAvoidingView,
-    Modal,
     Platform,
     SafeAreaView,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TextInput,
+    TouchableNativeFeedback,
     TouchableOpacity,
     View,
     useColorScheme
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Toast from 'react-native-toast-message';
 import uuid from 'react-native-uuid';
 import CustomDropdown from '../common/CustomDropdown';
+import { AddNewRoleModal } from '../Modals/AddNewRoleModal';
 
 export default function AddHelper() {
     const { control, handleSubmit, reset, setValue } = useForm();
@@ -42,6 +44,7 @@ export default function AddHelper() {
     const [open, setOpen] = React.useState(false);
     const [roleValue, setRoleValue] = React.useState<string | null>(null);
     const [newRole, setNewRole] = React.useState('');
+    const [visible, setVisible] = useState(false);
 
     const [modalVisible, setModalVisible] = React.useState(false);
     const [newRoleInput, setNewRoleInput] = React.useState('');
@@ -72,7 +75,7 @@ export default function AddHelper() {
                     topOffset: 80,
                 });
                 reset();
-                setTimeout(() => router.navigate('/helper-details'), 300);
+                setTimeout(() => router.navigate('/helpers'), 300);
             } else {
                 Toast.show({
                     type: 'error',
@@ -135,255 +138,147 @@ export default function AddHelper() {
             backgroundColor: isDark ? '#18181b' : '#f3f4f6',
             marginTop: StatusBar.currentHeight
         }}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1, padding: 24 }}
-            >
-                {/* <ScrollView contentContainerStyle={{ padding: 24 }}> */}
-                {/* Header */}
-                <View style={styles.headerContainer}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={[
-                            styles.backButton,
-                            { backgroundColor: isDark ? '#27272a' : '#e0e7ff' }
-                        ]}
-                    >
-                        <Ionicons name="arrow-back" size={28} color={isDark ? '#818cf8' : '#6366f1'} />
-                    </TouchableOpacity>
-                    <Text style={[
-                        styles.headerTitle,
-                        { color: isDark ? '#f9fafb' : '#1f2937' }
-                    ]}>Add New Helper</Text>
-                </View>
-
-                {/* Card */}
-                <View style={[
-                    styles.card,
-                    {
-                        backgroundColor: isDark ? 'transparent' : '#fff',
-                        shadowColor: isDark ? 'transparent' : '#6366f1'
-                    }
-                ]}>
-                    {/* Name */}
-                    <Text style={[
-                        styles.label,
-                        { color: isDark ? '#e5e7eb' : '#374151' }
-                    ]}>Name</Text>
-                    <Controller
-                        control={control}
-                        name="name"
-                        rules={{ required: true }}
-                        render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    {
-                                        backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                                        color: isDark ? '#f9fafb' : '#111827',
-                                        borderColor: isDark ? '#52525b' : '#d1d5db'
-                                    }
-                                ]}
-                                onChangeText={onChange}
-                                value={value}
-                                placeholder="e.g., Sunita"
-                                placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
-                            />
-                        )}
-                    />
-
-                    {/* Role Dropdown */}
-                    <Text style={[
-                        styles.label,
-                        { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
-                    ]}>Role</Text>
-                    <DropDownPicker
-                        open={open}
-                        value={roleValue}
-                        items={[
-                            ...roleItems,
-                            { label: 'Add New Role', value: 'add_new_role', icon: () => <Ionicons name="add" size={20} color={isDark ? '#818cf8' : '#6366f1'} /> }
-                        ]}
-                        setOpen={setOpen}
-                        setValue={callbackOrValue => {
-                            // DropDownPicker passes either a value or a callback, so handle both
-                            const value = typeof callbackOrValue === 'function' ? callbackOrValue(roleValue) : callbackOrValue;
-                            if (value === 'add_new_role') {
-                                setOpen(false);
-                                setModalVisible(true);
-                            } else {
-                                setRoleValue(value);
-                            }
-                        }}
-                        setItems={setRoleItems}
-                        placeholder="Select a role"
-                        style={{
-                            backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                            borderColor: isDark ? '#52525b' : '#d1d5db',
-                        }}
-                        textStyle={{
-                            color: isDark ? '#f9fafb' : '#111827',
-                        }}
-                        dropDownContainerStyle={{
-                            backgroundColor: isDark ? '#18181b' : '#fff',
-                            borderColor: isDark ? '#52525b' : '#d1d5db',
-                        }}
-                    />
-
-                    {/* Salary */}
-                    <Text style={[
-                        styles.label,
-                        { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
-                    ]}>Monthly Salary (₹)</Text>
-                    <Controller
-                        control={control}
-                        name="salary"
-                        rules={{ required: true }}
-                        render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    {
-                                        backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                                        color: isDark ? '#f9fafb' : '#111827',
-                                        borderColor: isDark ? '#52525b' : '#d1d5db'
-                                    }
-                                ]}
-                                onChangeText={onChange}
-                                value={value}
-                                placeholder="e.g., 5000"
-                                placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
-                                keyboardType="numeric"
-                            />
-                        )}
-                    />
-
-                    {/* <Text style={[
-                        styles.label,
-                        { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
-                    ]}>
-                        Month
-                    </Text> */}
-                    {/* <DropDownPicker
-                        open={monthOpen}
-                        value={monthValue}
-                        items={monthItemsState}
-                        setOpen={setMonthOpen}
-                        setValue={setMonthValue}
-                        setItems={setMonthItemsState}
-                        placeholder="Select a month"
-                        style={{
-                            backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                            borderColor: isDark ? '#52525b' : '#d1d5db',
-                            minHeight: 44,
-                        }}
-                        textStyle={{
-                            color: isDark ? '#f9fafb' : '#111827',
-                        }}
-                        dropDownContainerStyle={{
-                            backgroundColor: isDark ? '#18181b' : '#fff',
-                            borderColor: isDark ? '#52525b' : '#d1d5db',
-                        }}
-                    /> */}
-                    <CustomDropdown
-                        label="Month"
-                        value={monthValue}
-                        onSelect={handleMonthChange}
-                        items={monthItemsState}
-                        placeholder="Select a month"
-                        dark={isDark}
-                        containerStyle={{ marginTop: 15 }}
-                    />
-
-                    {/* Button */}
-                    <TouchableOpacity
-                        style={[
-                            styles.addButton,
-                            { backgroundColor: isDark ? '#818cf8' : '#6366f1', shadowColor: isDark ? '#818cf8' : '#6366f1' }
-                        ]}
-                        onPress={handleSubmit(onSubmit)}
-                    >
-                        <Ionicons name="person-add" size={22} color="#fff" style={{ marginRight: 8 }} />
-                        <Text style={styles.addButtonText}>Add Helper</Text>
-                    </TouchableOpacity>
-                </View>
-                {/* </ScrollView> */}
-                {/* Modal for adding new role */}
-                <Modal
-                    visible={modalVisible}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setModalVisible(false)}
+            <TouchableNativeFeedback onPress={Keyboard.dismiss} >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={{ flex: 1, padding: 24 }}
                 >
-                    <View style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.5)'
-                    }}>
-                        <View style={{
-                            backgroundColor: isDark ? '#18181b' : '#fff',
-                            padding: 24,
-                            borderRadius: 16,
-                            width: '80%',
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.2,
-                            shadowRadius: 8,
-                            elevation: 10,
-                        }}>
-                            <Text style={{
-                                fontSize: 18,
-                                fontWeight: 'bold',
-                                color: isDark ? '#f9fafb' : '#1f2937',
-                                marginBottom: 12,
-                            }}>Add New Role</Text>
-                            <TextInput
-                                style={{
-                                    borderWidth: 1,
-                                    borderColor: isDark ? '#52525b' : '#d1d5db',
-                                    backgroundColor: isDark ? '#18181b' : '#f9fafb',
-                                    color: isDark ? '#f9fafb' : '#111827',
-                                    borderRadius: 8,
-                                    padding: 12,
-                                    fontSize: 16,
-                                    marginBottom: 16,
-                                }}
-                                value={newRoleInput}
-                                onChangeText={setNewRoleInput}
-                                placeholder="Enter new role"
-                                placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
-                            />
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                                <TouchableOpacity
-                                    style={{
-                                        paddingVertical: 10,
-                                        paddingHorizontal: 18,
-                                        borderRadius: 8,
-                                        backgroundColor: isDark ? '#818cf8' : '#6366f1',
-                                        marginRight: 8,
-                                    }}
-                                    onPress={handleAddRoleFromModal}
-                                >
-                                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Add</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{
-                                        paddingVertical: 10,
-                                        paddingHorizontal: 18,
-                                        borderRadius: 8,
-                                        backgroundColor: isDark ? '#27272a' : '#e0e7ff',
-                                    }}
-                                    onPress={() => setModalVisible(false)}
-                                >
-                                    <Text style={{ color: isDark ? '#818cf8' : '#6366f1', fontWeight: 'bold' }}>Cancel</Text>
-                                </TouchableOpacity>
-                            </View>
+                    <ScrollView contentContainerStyle={{ padding: 0 }}>
+                        {/* Header */}
+                        <View style={styles.headerContainer}>
+                            <TouchableOpacity
+                                onPress={() => router.back()}
+                                style={[
+                                    styles.backButton,
+                                    { backgroundColor: isDark ? '#27272a' : '#e0e7ff' }
+                                ]}
+                            >
+                                <Ionicons name="arrow-back" size={28} color={isDark ? '#818cf8' : '#6366f1'} />
+                            </TouchableOpacity>
+                            <Text style={[
+                                styles.headerTitle,
+                                { color: isDark ? '#f9fafb' : '#1f2937' }
+                            ]}>Add New Helper</Text>
                         </View>
-                    </View>
-                </Modal>
 
-            </KeyboardAvoidingView>
+                        {/* Card */}
+                        <View style={[
+                            styles.card,
+                            {
+                                backgroundColor: isDark ? 'transparent' : '#fff',
+                                shadowColor: isDark ? 'transparent' : '#6366f1'
+                            }
+                        ]}>
+                            {/* Name */}
+                            <Text style={[
+                                styles.label,
+                                { color: isDark ? '#e5e7eb' : '#374151' }
+                            ]}>Name</Text>
+                            <Controller
+                                control={control}
+                                name="name"
+                                rules={{ required: true }}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            {
+                                                backgroundColor: isDark ? '#18181b' : '#f9fafb',
+                                                color: isDark ? '#f9fafb' : '#111827',
+                                                borderColor: isDark ? '#52525b' : '#d1d5db'
+                                            }
+                                        ]}
+                                        onChangeText={onChange}
+                                        value={value}
+                                        placeholder="e.g., Sunita"
+                                        placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
+                                    />
+                                )}
+                            />
+
+                            {/* Role Dropdown */}
+                            <CustomDropdown
+                                label="Role"
+                                items={[
+                                    ...roleItems,
+                                    { label: 'Add New Role', value: 'add_new_role', icon: () => <Ionicons name="add" size={20} color={isDark ? '#818cf8' : '#6366f1'} /> }
+                                ]}
+                                value={roleValue}
+                                onSelect={(value) => {
+                                    if (value === 'add_new_role') {
+                                        setModalVisible(true);
+                                    } else {
+                                        setRoleValue(value);
+                                    }
+                                }}
+                                placeholder="Select a role"
+                                containerStyle={{ marginTop: 18 }}
+                                dark={isDark}
+                            />
+
+                            {/* Salary */}
+                            <Text style={[
+                                styles.label,
+                                { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
+                            ]}>Monthly Salary (₹)</Text>
+                            <Controller
+                                control={control}
+                                name="salary"
+                                rules={{ required: true }}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            {
+                                                backgroundColor: isDark ? '#18181b' : '#f9fafb',
+                                                color: isDark ? '#f9fafb' : '#111827',
+                                                borderColor: isDark ? '#52525b' : '#d1d5db'
+                                            }
+                                        ]}
+                                        onChangeText={onChange}
+                                        value={value}
+                                        placeholder="e.g., 5000"
+                                        placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
+                                        keyboardType="numeric"
+                                    />
+                                )}
+                            />
+
+                            {/* Month */}
+                            <CustomDropdown
+                                label="Month"
+                                value={monthValue}
+                                onSelect={handleMonthChange}
+                                items={monthItemsState}
+                                placeholder="Select a month"
+                                dark={isDark}
+                                containerStyle={{ marginTop: 15 }}
+                            />
+
+                            {/* Button */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.addButton,
+                                    { backgroundColor: isDark ? '#818cf8' : '#6366f1', shadowColor: isDark ? '#818cf8' : '#6366f1' }
+                                ]}
+                                onPress={handleSubmit(onSubmit)}
+                            >
+                                <Ionicons name="person-add" size={22} color="#fff" style={{ marginRight: 8 }} />
+                                <Text style={styles.addButtonText}>Add Helper</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                    {/* Modal for adding new role */}
+                    <AddNewRoleModal
+                        modalVisible={modalVisible}
+                        setModalVisible={setModalVisible}
+                        isDark={isDark}
+                        newRoleInput={newRoleInput}
+                        setNewRoleInput={setNewRoleInput}
+                        handleAddRoleFromModal={handleAddRoleFromModal}
+                    />
+                </KeyboardAvoidingView>
+            </TouchableNativeFeedback>
         </SafeAreaView>
     );
 }
@@ -415,6 +310,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '500',
         marginBottom: 6,
+    },
+    dropdownButton: {
+        borderWidth: 1,
+        padding: 12,
+        borderRadius: 8,
+    },
+    dropdownText: {
+        fontSize: 16,
     },
     input: {
         borderWidth: 1,

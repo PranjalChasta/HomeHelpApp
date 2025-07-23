@@ -8,22 +8,20 @@ import {
     ActivityIndicator,
     Alert,
     Keyboard,
-    Modal,
-    Platform,
-    Pressable,
     SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     useColorScheme,
-    View,
+    View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import SalaryManagement from '../Calculations/SalaryManagementComponent';
-import CustomDropdown from '../common/CustomDropdown';
+import { AddTransactionModal } from '../Modals/AddTransactionModal';
+import { EditHelperModal } from '../Modals/EditHelperModal';
+import { SideOptionModal } from '../Modals/SideOptionModal';
 
 type HelperDoc = {
     _id: string;
@@ -183,10 +181,12 @@ export default function HelperDetailPage({ params }: any) {
             params.role = editedRole;
             setSalary(parseInt(editedSalary));
             setEditModalVisible(false);
-            Toast.show({
-                type: 'success',
-                text1: 'Successfully updated!'
-            });
+            setTimeout(() => {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Successfully updated!'
+                });
+            }, 0);
         } catch (err) {
             Alert.alert('Error', 'Failed to update');
         }
@@ -340,254 +340,52 @@ export default function HelperDetailPage({ params }: any) {
             </ScrollView>
 
             {/* side Modal */}
-            <Modal
-                transparent={true}
-                backdropColor={"transparent"}
-                animationType="fade"
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-                    <View style={[styles.modalContent, {
-                        position: 'absolute',
-                        top: Platform.OS === 'ios' ? dotsPosition.y + 30 : dotsPosition.y,
-                        left: Platform.OS === 'ios' ? dotsPosition.x - 150 : dotsPosition.x - 140,
-                        width: 'auto',
-                        backgroundColor: isDark ? '#fff' : '#111827',
-                    }]}>
-                        <TouchableOpacity
-                            style={styles.modalBtn}
-                            onPress={() => {
-                                setModalVisible(false);
-                                setEditedSalary(String(salary));
-                                setEditModalVisible(true);
-                            }}
-                        >
-                            <MaterialCommunityIcons name="pencil-outline" color={isDark ? '#818cf8' : '#6366f1'} size={22} />
-                            <Text style={[styles.modalBtnText, { color: isDark ? '#000' : '#fff' }]}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.modalBtn}
-                            onPress={() => {
-                                setModalVisible(false);
-                                setTimeout(() => {
-                                    router.navigate({
-                                        pathname: '/attendance',
-                                        params: {
-                                            id: params.id,
-                                            name: params.name,
-                                            role: params.role,
-                                        },
-                                    });
-                                }, 300);
-                            }}
-                        >
-                            <Ionicons name="calendar-outline" color={isDark ? '#818cf8' : '#6366f1'} size={22} />
-                            <Text style={[styles.modalBtnText, { color: isDark ? '#000' : '#fff' }]}>Add Attendance</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.modalBtn}
-                            onPress={() => {
-                                setModalVisible(false);
-                                setEditModalVisible(false);
-                                setTxnForm({ _id: '', amount: '', direction: 'give', note: '' });
-                                setIsEditingTxn(false);
-                                setTxnModalVisible(true);
-
-                            }}
-                        >
-                            <RoleIcon role="Money" color={isDark ? '#818cf8' : '#6366f1'} size={22} />
-                            <Text style={[styles.modalBtnText, { color: isDark ? '#000' : '#fff' }]}>Add Transaction</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.modalBtn}
-                            onPress={() => {
-                                setModalVisible(false);
-                                Alert.alert('Confirm Delete', 'Are you sure you want to delete this helper?', [
-                                    {
-                                        text: 'Cancel',
-                                        style: 'cancel',
-                                    },
-                                    {
-                                        text: 'Delete',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                            try {
-                                                const doc = await db.getDoc(params.id);
-                                                if (doc) await db.deleteDoc(doc._id, doc._rev);
-                                                router.back(); // Navigate back
-                                            } catch (err) {
-                                                Alert.alert('Error', 'Failed to delete helper');
-                                            }
-                                        },
-                                    },
-                                ]);
-                            }}
-                        >
-                            <Ionicons name="remove-circle-outline" color={isDark ? '#f14747ff' : '#f14747ff'} size={22} />
-                            <Text style={[styles.modalBtnText, { color: '#f14747ff' }]}>Delete</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Pressable>
-            </Modal>
+            <SideOptionModal
+                modalVisible={modalVisible}
+                setModalVisible={setModalVisible}
+                dotsPosition={dotsPosition}
+                isDark={isDark}
+                styles={styles}
+                salary={salary}
+                setEditedSalary={setEditedSalary}
+                setEditModalVisible={setEditModalVisible}
+                params={params}
+                setTxnForm={setTxnForm}
+                setIsEditingTxn={setIsEditingTxn}
+                setTxnModalVisible={setTxnModalVisible}
+            />
 
             {/* Edit Modal */}
-            <Modal
-                transparent
-                visible={editModalVisible}
-                animationType="slide"
-                onRequestClose={() => setEditModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { width: '90%' }]}>
-                        <TouchableOpacity
-                            onPress={() => setEditModalVisible(false)}
-                            style={{ position: 'absolute', right: 12, top: 12, zIndex: 10 }}
-                        >
-                            <Ionicons name="close" size={24} color="#6b7280" />
-                        </TouchableOpacity>
-                        <Text style={styles.modalTitle}>Edit Helper</Text>
-
-                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Name</Text>
-                        <TextInput
-                            value={editedName}
-                            onChangeText={setEditedName}
-                            style={styles.inputField}
-                        />
-
-                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Role</Text>
-                        <TextInput
-                            value={editedRole}
-                            onChangeText={setEditedRole}
-                            style={styles.inputField}
-                        />
-
-                        <Text style={[styles.inputLabel, { color: !isDark ? '#e5e7eb' : '#374151' }]}>Monthly Salary</Text>
-                        <TextInput
-                            value={editedSalary}
-                            onChangeText={setEditedSalary}
-                            keyboardType="numeric"
-                            style={styles.inputField}
-                        />
-
-                        <CustomDropdown
-                            label="Month"
-                            value={monthValue}
-                            onSelect={handleMonthChange}
-                            items={monthItemsState}
-                            placeholder="Select a month"
-                            dark={!isDark}
-                        />
-                        <View style={styles.buttonRow}>
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: '#e5e7eb' }]}
-                                onPress={() => setEditModalVisible(false)}
-                            >
-                                <Text style={[styles.buttonText, { color: '#374151' }]}>Cancel</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: '#4f46e5' }]}
-                                onPress={() => updateHelper()}
-                            >
-                                <Text style={[styles.buttonText, { color: '#fff' }]}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+            <EditHelperModal
+                editModalVisible={editModalVisible}
+                setEditModalVisible={setEditModalVisible}
+                styles={styles}
+                isDark={isDark}
+                editedName={editedName}
+                setEditedName={setEditedName}
+                editedRole={editedRole}
+                setEditedRole={setEditedRole}
+                editedSalary={editedSalary}
+                setEditedSalary={setEditedSalary}
+                monthValue={monthValue}
+                handleMonthChange={handleMonthChange}
+                monthItemsState={monthItemsState}
+                updateHelper={updateHelper}
+            />
 
             {/* Add/Edit Transaction */}
-            <Modal
-                transparent
-                visible={txnModalVisible}
-                animationType="slide"
-                onRequestClose={() => setTxnModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { width: '90%' }]}>
-                        <TouchableOpacity
-                            onPress={() => setTxnModalVisible(false)}
-                            style={{ position: 'absolute', right: 12, top: 12, zIndex: 10 }}
-                        >
-                            <Ionicons name="close" size={24} color="#6b7280" />
-                        </TouchableOpacity>
+            <AddTransactionModal
+                txnModalVisible={txnModalVisible}
+                setTxnModalVisible={setTxnModalVisible}
+                styles={styles}
+                isEditingTxn={isEditingTxn}
+                txnForm={txnForm}
+                isDark={isDark}
+                setTxnForm={setTxnForm}
+                saveTransactionAmt={saveTransactionAmt}
+            />
 
-                        <Text style={styles.modalTitle}>{isEditingTxn ? 'Edit Transaction' : 'Add Transaction'}</Text>
-
-                        <Text style={styles.inputLabel}>Amount</Text>
-                        <TextInput
-                            keyboardType="numeric"
-                            value={txnForm.amount}
-                            onChangeText={(val) => setTxnForm((prev) => ({ ...prev, amount: val }))}
-                            style={styles.inputField}
-                        />
-
-                        <Text style={styles.inputLabel}>Direction</Text>
-                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
-                            {['give', 'take'].map((dir) => (
-                                <TouchableOpacity
-                                    key={dir}
-                                    style={{
-                                        backgroundColor: txnForm.direction === dir ? '#4f46e5' : '#e5e7eb',
-                                        paddingVertical: 6,
-                                        paddingHorizontal: 16,
-                                        borderRadius: 6,
-                                    }}
-                                    onPress={() => setTxnForm((prev) => ({ ...prev, direction: dir }))}
-                                >
-                                    <Text style={{ color: txnForm.direction === dir ? '#fff' : '#111827' }}>
-                                        {dir.charAt(0).toUpperCase() + dir.slice(1)}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.inputLabel}>Note</Text>
-                        <TextInput
-                            value={txnForm.note}
-                            onChangeText={(val) => setTxnForm((prev) => ({ ...prev, note: val }))}
-                            style={styles.inputField}
-                        />
-
-                        <View style={styles.buttonRow}>
-                            {isEditingTxn ? (
-                                <TouchableOpacity
-                                    style={[styles.button, { backgroundColor: '#f87171' }]}
-                                    onPress={async () => {
-                                        try {
-                                            const doc = await db.getDoc(txnForm._id);
-                                            if (doc) await db.deleteDoc(doc._id, doc._rev);
-                                            setTxnModalVisible(false);
-                                            setTxnForm({ _id: '', amount: '', direction: 'give', note: '' });
-                                            // router.replace(router.asPath); // Refresh page
-                                        } catch (err) {
-                                            Alert.alert('Error', 'Failed to delete transaction');
-                                        }
-                                    }}
-                                >
-                                    <Text style={[styles.buttonText, { color: '#ffffff' }]}>Delete</Text>
-                                </TouchableOpacity>
-                            ) : (
-                                <TouchableOpacity
-                                    style={[styles.button, { backgroundColor: '#e5e7eb' }]}
-                                    onPress={() => setTxnModalVisible(false)}
-                                >
-                                    <Text style={[styles.buttonText, { color: '#374151' }]}>Cancel</Text>
-                                </TouchableOpacity>
-                            )}
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: '#4f46e5' }]}
-                                // disabled={!(txnForm.amount.trim() !== '' && txnForm.direction.trim() !== '' && txnForm.note.trim() !== '')}
-                                onPress={async () => saveTransactionAmt()}
-                            >
-                                <Text style={[styles.buttonText, { color: '#fff' }]}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-            <Toast />
+            {/* <Toast /> */}
         </SafeAreaView >
     );
 }

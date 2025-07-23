@@ -1,10 +1,10 @@
-import { StatusBar, StyleSheet } from "react-native";
+import { Platform, StatusBar, StyleSheet } from "react-native";
 
 export const dashboardStyles = StyleSheet.create({
     container: {
         flex: 1,
         marginVertical: StatusBar.currentHeight,
-        marginBottom: 60
+        marginBottom: Platform.OS === 'ios' ? 60 : 0
     },
     backgroundImage: {
         flex: 1,

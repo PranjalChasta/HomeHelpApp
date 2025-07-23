@@ -3,13 +3,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import couchdb from '@/services/couchdb';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 export default function Helpers({ params }: any) {
-    const [helpers, setHelpers] = React.useState<Helper[]>([]);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const [helpers, setHelpers] = useState<Helper[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
     const colorScheme = useColorScheme();
@@ -24,8 +26,8 @@ export default function Helpers({ params }: any) {
     }, [params?.role]);
 
     const fetchHelpers = useCallback(async () => {
-        setIsLoading(true);
         try {
+            setIsLoading(true);
             if (params?.role) {
                 const selectorData = {
                     role: params?.role,
@@ -38,12 +40,38 @@ export default function Helpers({ params }: any) {
                 const helperItems = result.filter((item: any) => item.role) as Helper[];
                 setHelpers(helperItems);
             }
+            setIsLoading(false);
         } catch (error) {
             console.error('Error fetching helpers:', error);
         } finally {
             setIsLoading(false);
         }
-    }, [params?.role]);
+    }, [params?.role, isLoading]);
+
+    const RefreshHelpers = useCallback(async () => {
+        try {
+            setRefreshing(true);
+            if (params?.role) {
+                const selectorData = {
+                    role: params?.role,
+                    type: 'helper',
+                };
+                const result = await couchdb.findByRole({ selector: selectorData });
+                setHelpers(result?.docs);
+            } else {
+                const result = await couchdb.getAllDocs();
+                const helperItems = result.filter((item: any) => item.role) as Helper[];
+                setHelpers(helperItems);
+            }
+            setRefreshing(false);
+        } catch (error) {
+            console.error('Error fetching helpers:', error);
+        } finally {
+            setRefreshing(false);
+        }
+    }, [params?.role, isLoading]);
+
+
 
     useFocusEffect(
         useCallback(() => {
@@ -117,9 +145,17 @@ export default function Helpers({ params }: any) {
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
-                refreshing={isLoading}
-                onRefresh={fetchHelpers}
+                ListEmptyComponent={<Text style={styles.emptyText}>No Notifications Found</Text>}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={RefreshHelpers}
+                        tintColor='#6366f1'
+                        progressBackgroundColor={'#6366f1'}
+                    />
+                }
             />
+            <Toast />
         </SafeAreaView>
     );
 }
@@ -153,6 +189,13 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         padding: 16,
+    },
+    emptyText: {
+        color: '#ffffff',
+        textAlign: 'center',
+        fontSize: 20,
+        marginTop: 100,
+        letterSpacing: 1,
     },
     card: {
         flexDirection: 'row',
