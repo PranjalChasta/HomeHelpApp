@@ -2,7 +2,8 @@ import db from '@/services/couchdb';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { CalendarSkeleton } from '../common/CustomAnimated';
 import CustomCalendar from './CalendarComponent';
 
@@ -12,61 +13,53 @@ export default function LeaveManagement() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
-    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedDates, setSelectedDates] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [calendarLoading, setCalendarLoading] = useState(true);
-    const [attendanceDoc, setAttendanceDoc] = useState<any>();
-    const [selectedText, setSelectedText] = useState('MARK LEAVE');
+    const [leaveMarkedDates, setLeaveMarkedDates] = useState<string[]>([]);
     const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
 
-    useEffect(() => {
-        const getDocument = async () => {
-            // setIsLoading(true);
-            if (selectedDate && id) {
-                const docId = `attend_${selectedDate}_${id}`;
-                const existing = await db.getDoc(docId);
-                if (existing?._id) {
-                    setSelectedText('Remove Leave');
-                    setAttendanceDoc(existing);
-                } else {
-                    setSelectedText('Mark Leave');
-                    setAttendanceDoc(null);
-                }
-                // setIsLoading(false);
-            }
-        }
-        getDocument();
-    }, [selectedDate]);
-
-    useEffect(() => {
+    const toggleDateSelection = (date: string) => {
+        setSelectedDates((prev) =>
+            prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
+        );
+    };
+    const getLeaves = async () => {
         if (id) {
             setCalendarLoading(true);
-            loadLeaves();
+            await loadLeaves();
         }
+    };
+
+    useEffect(() => {
+        getLeaves();
     }, [id]);
 
     const loadLeaves = async () => {
         try {
-            // setIsLoading(true);
+            const docId = `attend_${id}`;
             const result = await db.find({
                 selector: {
                     type: 'attendance',
                     helper_id: id,
-                    status: 'leave'
-                }
+                },
             });
-
+            const attdDoc = result?.docs?.find((item: any) => item._id === docId);
             const marks: Record<string, any> = {};
-            result.docs.forEach((doc: any) => {
-                marks[doc.date] = {
-                    marked: true,
-                    dotColor: 'red',
-                    selectedColor: '#fdecea',
-                    dayTextColor: 'red',
-                    selected: true,
-                };
-            });
-            setSelectedDate(new Date().toISOString());
+            if (attdDoc?.dates?.length) {
+                setLeaveMarkedDates(attdDoc.dates);
+                attdDoc?.dates.forEach((date: string) => {
+                    marks[date] = {
+                        marked: true,
+                        dotColor: 'red',
+                        selectedColor: '#f5a6a6ff',
+                        dayTextColor: 'red',
+                        selected: true,
+                    };
+                });
+            }
+
+            setSelectedDates([]);
             setMarkedDates(marks);
             setCalendarLoading(false);
         } catch (err) {
@@ -75,58 +68,76 @@ export default function LeaveManagement() {
         }
     };
 
-    const removeLeave = async () => {
+    const updateLeave = async () => {
         setIsLoading(true);
-        if (attendanceDoc?._id) {
-            Alert.alert(
-                "Leave already marked",
-                "Do you want to remove it?",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: async () => {
-                            try {
-                                await db.deleteDoc(attendanceDoc._id, attendanceDoc._rev);
-                                loadLeaves();
-                            } catch (deleteErr) {
-                                console.error("Error deleting leave:", deleteErr);
-                                alert("Failed to delete leave.");
-                            }
-                        },
-                    },
-                ],
-                { cancelable: true }
-            );
-        }
-        setIsLoading(false);
-    }
-
-    const markLeave = async () => {
-        if (!selectedDate) {
-            alert("Please select a date first.");
-            return;
-        }
-        setIsLoading(true);
-        const docId = `attend_${selectedDate}_${id}`;
+        setCalendarLoading(true);
 
         try {
-            const doc = {
-                _id: docId,
-                type: 'attendance',
-                helper_id: id,
-                date: selectedDate,
-                status: 'leave',
-            };
-            await db.createDoc(doc);
-            alert("Leave marked!");
-            loadLeaves();
-        } catch (err: any) {
-            console.error("Error checking existing leave:", err);
+            const docId = `attend_${id}`;
+            const attRes = await db.getAllDocs() as any[];
+            const attdDoc = attRes?.find(
+                (doc) => doc.helper_id === id && doc.type === 'attendance'
+            );
+
+            if (!attdDoc) {
+                setIsLoading(false);
+                const newDoc = {
+                    _id: docId,
+                    type: 'attendance',
+                    helper_id: id,
+                    status: 'leave',
+                    dates: selectedDates,
+                };
+                await db.createDoc(newDoc);
+                setSelectedDates([]);
+                await loadLeaves();
+                setCalendarLoading(false);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Leave added successfully!'
+                });
+                return;
+            }
+            const existingDates = attdDoc.dates || [];
+            const dateSet = new Set(existingDates);
+            selectedDates.forEach((date) => {
+                if (dateSet.has(date)) {
+                    dateSet.delete(date); // remove
+                } else {
+                    dateSet.add(date); // add
+                }
+            });
+
+            const updatedDates = Array.from(dateSet);
+
+            // Save updated document or delete if empty
+            if (updatedDates.length === 0) {
+                await db.deleteDoc(attdDoc._id, attdDoc._rev);
+                setSelectedDates([]);
+                await loadLeaves();
+
+            } else {
+                await db.updateDoc(docId, {
+                    ...attdDoc,
+                    dates: updatedDates,
+                });
+                setSelectedDates([]);
+                await loadLeaves();
+            }
+            setCalendarLoading(false);
+            Toast.show({
+                type: 'success',
+                text1: 'Leave updated successfully!'
+            });
+        } catch (err) {
+            setCalendarLoading(false);
+            setIsLoading(false);
+            console.error("Error removing leave:", err);
             alert("Something went wrong.");
+        } finally {
+            setCalendarLoading(false);
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     return (
@@ -153,14 +164,31 @@ export default function LeaveManagement() {
                         <CalendarSkeleton isDark={isDark} />
                     ) : (
                         <CustomCalendar
-                            setSelectedDate={setSelectedDate}
-                            markedDates={markedDates}
-                            selectedDate={selectedDate}
+                            setSelectedDate={toggleDateSelection}
+                            markedDates={{
+                                ...markedDates,
+                                ...Object.fromEntries(
+                                    selectedDates.map((date) => {
+                                        const isAlreadyInDb = leaveMarkedDates.includes(date);
+                                        return [
+                                            date,
+                                            {
+                                                selected: true,
+                                                selectedColor: isAlreadyInDb ? '#f8d6d6ff' : '#70bbf8ff',
+                                                marked: true,
+                                                dotColor: isAlreadyInDb ? 'red' : '#058cfaff',
+                                            },
+                                        ];
+                                    })
+                                ),
+                            }}
+                            selectedDates={selectedDates}
                         />
                     )}
 
                     <TouchableOpacity
-                        onPress={attendanceDoc?._id ? removeLeave : markLeave}
+                        onPress={updateLeave}
+                        disabled={calendarLoading || isLoading}
                         style={{
                             backgroundColor: '#007AFF',
                             paddingVertical: 10,
@@ -169,19 +197,14 @@ export default function LeaveManagement() {
                             alignItems: 'center',
                             flexDirection: 'row',
                             justifyContent: 'center',
+                            alignSelf: 'center',
+                            opacity: calendarLoading || isLoading ? 0.5 : 1,
                         }}
-                        disabled={isLoading}
                     >
-                        {isLoading ? (
-                            <ActivityIndicator color="#ffffff" />
-                        ) : (
-                            <Text style={{ color: '#fff', fontSize: 16 }}>
-                                {attendanceDoc?._id ? 'Remove Leave' : 'Mark Leave'}
-                            </Text>
-                        )}
+                        <Text style={{ color: '#fff', fontSize: 16 }}>
+                            {'Mark/Remove Leave(s)'}
+                        </Text>
                     </TouchableOpacity>
-
-
                 </View>
             </View>
         </SafeAreaView>

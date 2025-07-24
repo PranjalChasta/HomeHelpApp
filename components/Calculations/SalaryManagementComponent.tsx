@@ -30,23 +30,21 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
             const now = new Date();
             const year = now.getFullYear();
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
-            const firstDayOfMonth = `${year}-${month}-01`;
-            const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
-            const lastDayOfMonth = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+            const currentMonthPrefix = `${year}-${month}`; // e.g. "2025-07"
 
-            const selectorData = {
-                date: {
-                    $gte: firstDayOfMonth,
-                    $lte: lastDayOfMonth
-                },
-                helper_id: id.toString(),
-                type: "attendance"
-            };
+            const result = await db.find({
+                selector: {
+                    type: "attendance",
+                    helper_id: id.toString(),
+                }
+            });
+            const allDates: string[] = result.docs.flatMap((doc: any) => doc.dates || []);
+            const currentMonthDates = allDates.filter(date => date.startsWith(currentMonthPrefix));
+            const leaveCount = result.docs.flatMap((doc: any) => (doc.status === 'leave' ? doc.dates : []) || [])
+                .filter((date: string) => date.startsWith(currentMonthPrefix)).length;
 
-            const result = await db.find({ selector: selectorData });
-            const leaveCount = result.docs.filter((d: any) => d.status === 'leave').length;
             const totalDays = new Date(year, now.getMonth() + 1, 0).getDate();
-            const present = totalDays;
+            const present = currentMonthDates.length;
 
             const currentMonth = getCurrentMonth();
 

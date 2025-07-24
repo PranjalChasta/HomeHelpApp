@@ -58,7 +58,7 @@ export default function SettingDashboard() {
 
     const handleAction = (id: string) => {
         // Implement actions for buttons
-        console.log(`Action triggered: ${id}`);
+        console.info(`Action triggered: ${id}`);
 
         // Here you would implement actual functionality
         // For example, triggering a backup or showing an about modal

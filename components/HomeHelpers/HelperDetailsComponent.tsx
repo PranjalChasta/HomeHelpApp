@@ -28,6 +28,7 @@ type HelperDoc = {
     helper_id: string;
     type: string;
     monthly_salary?: [];
+    dates?: [];
 };
 
 export default function HelperDetailPage({ params }: any) {
@@ -36,7 +37,6 @@ export default function HelperDetailPage({ params }: any) {
     const isDark = colorScheme === 'dark';
 
     const [loading, setLoading] = useState(true);
-    const [attendance, setAttendance] = useState<number>(0);
     const [salary, setSalary] = useState<number>(0);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -53,7 +53,7 @@ export default function HelperDetailPage({ params }: any) {
     const [txnModalVisible, setTxnModalVisible] = useState(false);
     const [isEditingTxn, setIsEditingTxn] = useState(false);
     const [txnForm, setTxnForm] = useState({
-        _id: '',
+        trans_id: '',
         amount: '',
         direction: 'give', // or 'take'
         note: '',
@@ -74,41 +74,86 @@ export default function HelperDetailPage({ params }: any) {
         try {
             // Fetch attendance count
             const attRes = await db.getAllDocs() as HelperDoc[];
-            const attCount = attRes.filter(
+            const attCount = attRes?.find(
                 (doc) => doc.helper_id === params.id && doc.type === 'attendance'
-            ).length;
-            setAttendance(attCount);
+            )?.dates?.length || 0;
 
-            // Fetch salary (assuming monthly_salary is in params or fetch from db)
             const helperDoc = attRes.find((doc) => doc._id === params.id);
             setSalary(
                 (helperDoc?.monthly_salary as { month: string; salary: number }[] | undefined)
                     ?.find(item => item.month === currentMonth)?.salary || 0
             );
         } catch (err) {
-            setAttendance(0);
             setSalary(0);
         }
         setLoading(false);
     }, [params?.id, netAmount, netDirection]);
 
+    const handleTransDelete = async (transId: string) => {
+        const docId = `txn_${params.id}`;
+
+        try {
+            const res = await db.getDoc(docId);
+
+            if (!res || !res.trans_detail || !Array.isArray(res.trans_detail)) {
+                alert("No transaction data found.");
+                return;
+            }
+
+            const updatedDetails = res.trans_detail.filter(
+                (txn: any) => txn.trans_id !== transId
+            );
+
+            if (updatedDetails.length === 0) {
+                // If no transactions remain, delete the entire document
+                await db.deleteDoc(res._id, res._rev);
+            } else {
+                // Update doc with filtered transaction list
+                await db.updateDoc(docId, {
+                    ...res,
+                    trans_detail: updatedDetails,
+                });
+            }
+            setTxnModalVisible(false);
+            setTimeout(() => {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Transaction Deleted',
+                });
+
+
+                // Optional: refresh data or UI
+                fetchTransactionDetails();
+
+            }, 100);
+        } catch (err) {
+            console.error("❌ Error deleting transaction:", err);
+            alert("Failed to delete transaction.");
+        }
+    };
+
+
     const fetchTransactionDetails = async () => {
         setLoading(true);
         try {
-            // Fetch attendance count
             const attRes = await db.getAllDocs() as any[];
-            // const attCount = attRes.filter(
-            //     (doc) => doc.helper_id === params.id && doc.type === 'attendance'
-            // ).length;
-            const txnDocs = attRes.filter((doc) => doc.helper_id === params.id && doc.type === 'transaction');
-            setTransactions(txnDocs);
+
+            const txnDoc = attRes.find(
+                (doc) => doc.helper_id === params.id && doc.type === 'transaction'
+            );
+
+            let allTransactions = txnDoc?.trans_detail || [];
+
+            setTransactions(allTransactions); // Store full array for display
+
             let totalGive = 0;
             let totalTake = 0;
-            txnDocs?.forEach((txn) => {
-                if (txn?.direction === 'give') {
-                    totalGive += txn.amount;
+
+            allTransactions.forEach((txn: any) => {
+                if (txn.direction === 'give') {
+                    totalGive += parseFloat(txn.amount || 0);
                 } else if (txn.direction === 'take') {
-                    totalTake += txn.amount;
+                    totalTake += parseFloat(txn.amount || 0);
                 }
             });
 
@@ -117,48 +162,91 @@ export default function HelperDetailPage({ params }: any) {
             setNetAmount(Math.abs(net));
             setNetDirection(net > 0 ? 'give' : net < 0 ? 'take' : null);
         } catch (err) {
-            // setAttendance(0);
-            // setSalary(0);
+            console.error('Error fetching transactions:', err);
             setTransactions([]);
+            setNetAmount(0);
+            setNetDirection(null);
         }
         setLoading(false);
-    }
+    };
 
-    const saveTransactionAmt = async () => {
-        try {
-            Keyboard.dismiss();
-            const isFormValid = txnForm.amount.trim() !== '' && txnForm.direction.trim() !== '' && txnForm.note.trim() !== '';
-            if (!isFormValid) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Incomplete Form',
-                    text2: 'Please fill all transaction fields',
-                });
-                return;
-            }
-            const date = new Date().toISOString().split('T')[0];
-            const doc = {
-                _id: txnForm._id || `txn_${date}_${params.id}_${Date.now()}`,
-                type: 'transaction',
-                helper_id: params.id,
-                date,
-                amount: parseFloat(txnForm.amount),
-                direction: txnForm.direction,
-                note: txnForm.note,
-            };
-            if (isEditingTxn) {
-                const oldDoc = await db.getDoc(doc._id);
-                await db.updateDoc(doc._id, { ...oldDoc, ...doc });
-            } else {
-                await db.createDoc(doc);
-            }
-            setTxnModalVisible(false);
-            setTxnForm({ _id: '', amount: '', direction: 'give', note: '' });
-            // router.replace(router.asPath); // Refresh screen
-        } catch (err) {
-            Alert.alert('Error', 'Failed to save transaction');
+    const saveTransactionAmt = async (transId: any) => {
+        Keyboard.dismiss();
+
+        const isFormValid =
+            txnForm.amount.trim() !== '' &&
+            txnForm.direction.trim() !== '' &&
+            txnForm.note.trim() !== '';
+
+        if (!isFormValid) {
+            Toast.show({
+                type: 'error',
+                text1: 'Incomplete Form',
+                text2: 'Please fill all transaction fields',
+            });
+            return;
         }
-    }
+
+        const docId = `txn_${params.id}`;
+        const date = new Date().toISOString().split('T')[0];
+
+        const transEntry = {
+            trans_id: txnForm.trans_id || `txn_${Date.now()}`,
+            date,
+            amount: parseFloat(txnForm.amount),
+            direction: txnForm.direction,
+            note: txnForm.note,
+        };
+
+        try {
+            const res = await db.getDoc(docId);
+
+            let updatedDetails = [];
+
+            if (res) {
+                const existing = res.trans_detail || [];
+
+                if (txnForm.trans_id) {
+                    // Update existing entry by trans_id
+                    updatedDetails = existing.map((txn: any) =>
+                        txn.trans_id === txnForm.trans_id ? transEntry : txn
+                    );
+                } else {
+                    // Append new entry
+                    updatedDetails = [...existing, transEntry];
+                }
+
+                const updatedDoc = {
+                    ...res,
+                    trans_detail: updatedDetails,
+                };
+
+                await db.updateDoc(docId, updatedDoc);
+            } else {
+                // New document
+                const newDoc = {
+                    _id: docId,
+                    type: 'transaction',
+                    helper_id: params.id,
+                    trans_detail: [transEntry],
+                };
+
+                await db.createDoc(newDoc);
+            }
+
+            setTxnModalVisible(false);
+            setTxnForm({ trans_id: '', amount: '', direction: 'give', note: '' });
+
+            Toast.show({
+                type: 'success',
+                text1: 'Transaction',
+                text2: txnForm.trans_id ? 'Transaction updated!' : 'Transaction added!',
+            });
+        } catch (err) {
+            console.error("❌ Error saving transaction:", err);
+            alert("Failed to save transaction.");
+        }
+    };
 
     const updateHelper = async () => {
         try {
@@ -274,7 +362,7 @@ export default function HelperDetailPage({ params }: any) {
                                     </View>
 
                                     {transactions?.map((txn) => (
-                                        <View key={txn._id} style={[styles.detailRow, { justifyContent: 'space-between' }]}>
+                                        <View key={txn.trans_id} style={[styles.detailRow, { justifyContent: 'space-between' }]}>
                                             <View>
                                                 <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#111827' }]}>
                                                     <Text style={[
@@ -295,7 +383,7 @@ export default function HelperDetailPage({ params }: any) {
                                             <TouchableOpacity
                                                 onPress={() => {
                                                     setTxnForm({
-                                                        _id: txn._id,
+                                                        trans_id: txn.trans_id,
                                                         amount: String(txn.amount),
                                                         direction: txn.direction,
                                                         note: txn.note || '',
@@ -383,6 +471,7 @@ export default function HelperDetailPage({ params }: any) {
                 isDark={isDark}
                 setTxnForm={setTxnForm}
                 saveTransactionAmt={saveTransactionAmt}
+                handleTransDelete={handleTransDelete}
             />
 
             {/* <Toast /> */}

@@ -1,4 +1,3 @@
-import couchdb from '@/services/couchdb';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
@@ -12,6 +11,7 @@ export const AddTransactionModal = ({
     isDark,
     setTxnForm,
     saveTransactionAmt,
+    handleTransDelete,
 }: any) => {
     const handleClose = () => {
         Keyboard.dismiss();
@@ -20,12 +20,7 @@ export const AddTransactionModal = ({
 
     const handleDelete = async () => {
         try {
-            const doc = await couchdb.getDoc(txnForm._id);
-            if (doc) {
-                await couchdb.deleteDoc(doc._id, doc._rev);
-                setTxnForm({ _id: '', amount: '', direction: 'give', note: '' });
-                setTxnModalVisible(false);
-            }
+            handleTransDelete(txnForm.trans_id);
         } catch (err) {
             Alert.alert('Error', 'Failed to delete transaction');
         }

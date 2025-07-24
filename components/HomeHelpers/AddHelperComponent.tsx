@@ -117,7 +117,6 @@ export default function AddHelper() {
 
     // Add new month to dropdown
     const handleMonthChange = (month: any) => {
-        console.log('handleMonthChange', month)
         setMonthValue(month);
     };
 
