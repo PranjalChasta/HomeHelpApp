@@ -18,7 +18,6 @@ export const EditHelperModal = ({
     editModalVisible,
     setEditModalVisible,
     styles,
-    isDark,
     editedName,
     setEditedName,
     editedRole,
@@ -28,6 +27,8 @@ export const EditHelperModal = ({
     monthValue,
     handleMonthChange,
     monthItemsState,
+    setEditedPaidLeave,
+    editedPaidLeave,
     updateHelper,
 }: any) => {
     return (
@@ -59,7 +60,7 @@ export const EditHelperModal = ({
                                     {
                                         width: '100%',
                                         maxWidth: 400,
-                                        backgroundColor: isDark ? '#18181b' : '#fff',
+                                        backgroundColor: '#ffffff',
                                         borderRadius: 16,
                                         padding: 24,
                                     },
@@ -74,21 +75,29 @@ export const EditHelperModal = ({
 
                                 <Text style={styles.modalTitle}>Edit Helper</Text>
 
-                                <Text style={[styles.inputLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Name</Text>
+                                <Text style={[styles.inputLabel, { color: '#374151' }]}>Name</Text>
                                 <TextInput
                                     value={editedName}
                                     onChangeText={setEditedName}
                                     style={styles.inputField}
                                 />
 
-                                <Text style={[styles.inputLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Role</Text>
+                                <Text style={[styles.inputLabel, { color: '#374151' }]}>Role</Text>
                                 <TextInput
                                     value={editedRole}
                                     onChangeText={setEditedRole}
                                     style={styles.inputField}
                                 />
 
-                                <Text style={[styles.inputLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Monthly Salary</Text>
+                                <Text style={[styles.inputLabel, { color: '#374151' }]}>Paid Leave</Text>
+                                <TextInput
+                                    value={editedPaidLeave}
+                                    onChangeText={setEditedPaidLeave}
+                                    keyboardType="numeric"
+                                    style={styles.inputField}
+                                />
+
+                                <Text style={[styles.inputLabel, { color: '#374151' }]}>Monthly Salary</Text>
                                 <TextInput
                                     value={editedSalary}
                                     onChangeText={setEditedSalary}
@@ -102,7 +111,7 @@ export const EditHelperModal = ({
                                     onSelect={handleMonthChange}
                                     items={monthItemsState}
                                     placeholder="Select a month"
-                                    dark={isDark}
+                                    dark={false}
                                 />
 
                                 <View style={styles.buttonRow}>

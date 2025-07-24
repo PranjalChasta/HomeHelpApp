@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Dimensions,
     Keyboard,
     SafeAreaView,
     ScrollView,
@@ -22,6 +23,7 @@ import SalaryManagement from '../Calculations/SalaryManagementComponent';
 import { AddTransactionModal } from '../Modals/AddTransactionModal';
 import { EditHelperModal } from '../Modals/EditHelperModal';
 import { SideOptionModal } from '../Modals/SideOptionModal';
+import { SkeletonBlock } from '../common/CustomAnimated';
 
 type HelperDoc = {
     _id: string;
@@ -38,11 +40,13 @@ export default function HelperDetailPage({ params }: any) {
 
     const [loading, setLoading] = useState(true);
     const [salary, setSalary] = useState<number>(0);
+    const [paidLeave, setPaidLeave] = useState<number>(0);
     const [modalVisible, setModalVisible] = useState(false);
 
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editedName, setEditedName] = useState(params.name);
     const [editedRole, setEditedRole] = useState(params.role);
+    const [editedPaidLeave, setEditedPaidLeave] = useState(String(2));
     const [editedSalary, setEditedSalary] = useState(String(salary));
     const [dotsPosition, setDotsPosition] = useState({ x: 0, y: 0 });
     const dotsRef = useRef<any>({});
@@ -83,11 +87,17 @@ export default function HelperDetailPage({ params }: any) {
                 (helperDoc?.monthly_salary as { month: string; salary: number }[] | undefined)
                     ?.find(item => item.month === currentMonth)?.salary || 0
             );
+            console.log('first, ', (helperDoc?.monthly_salary as { month: string; salary: number; paid_leave: any }[] | undefined)
+                ?.find(item => item.month === currentMonth)?.paid_leave || 2)
+            setPaidLeave(
+                (helperDoc?.monthly_salary as { month: string; salary: number; paid_leave: number }[] | undefined)
+                    ?.find(item => item.month === currentMonth)?.paid_leave || 2
+            );
         } catch (err) {
             setSalary(0);
         }
         setLoading(false);
-    }, [params?.id, netAmount, netDirection]);
+    }, [params?.id, netAmount, netDirection, editModalVisible]);
 
     const handleTransDelete = async (transId: string) => {
         const docId = `txn_${params.id}`;
@@ -131,7 +141,6 @@ export default function HelperDetailPage({ params }: any) {
             alert("Failed to delete transaction.");
         }
     };
-
 
     const fetchTransactionDetails = async () => {
         setLoading(true);
@@ -251,34 +260,52 @@ export default function HelperDetailPage({ params }: any) {
     const updateHelper = async () => {
         try {
             const doc = await db.getDoc(params.id);
+
+            const updatedSalaryEntry = {
+                month: monthValue,
+                salary: parseFloat(editedSalary),
+                paid_leave: parseInt(editedPaidLeave, 10) || 0,
+                updated_at: new Date().toISOString(),
+            };
+
+            // Clone and update monthly_salary array
+            let updatedMonthlySalary = [...(doc.monthly_salary || [])];
+            const existingIndex = updatedMonthlySalary.findIndex((item: any) => item.month === monthValue);
+
+            if (existingIndex !== -1) {
+                // Update the existing month entry
+                updatedMonthlySalary[existingIndex] = updatedSalaryEntry;
+            } else {
+                // Add new entry if not found
+                updatedMonthlySalary.push(updatedSalaryEntry);
+            }
+
             const updatedDoc = {
                 ...doc,
                 name: editedName,
                 role: editedRole,
-                monthly_salary: [
-                    ...doc.monthly_salary,
-                    {
-                        month: monthValue, // from state
-                        salary: parseFloat(editedSalary),
-                        updated_at: new Date().toISOString()
-                    }
-                ],
+                monthly_salary: updatedMonthlySalary,
             };
+
             await db.updateDoc(params.id, updatedDoc);
+
+            // Local state updates
             params.name = editedName;
             params.role = editedRole;
             setSalary(parseInt(editedSalary));
             setEditModalVisible(false);
+
             setTimeout(() => {
                 Toast.show({
                     type: 'success',
                     text1: 'Successfully updated!'
                 });
             }, 0);
+
         } catch (err) {
             Alert.alert('Error', 'Failed to update');
         }
-    }
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -328,7 +355,16 @@ export default function HelperDetailPage({ params }: any) {
                         <MaterialCommunityIcons name="dots-vertical" size={24} color={isDark ? '#d1d5db' : '#4b5563'} />
                     </TouchableOpacity>
                     {loading ? (
-                        <ActivityIndicator size="large" color={isDark ? '#818cf8' : '#6366f1'} />
+                        <View style={{ flexDirection: 'row', display: 'flex', gap: 50 }}>
+                            <View style={{ flexDirection: 'column', display: 'flex' }}>
+                                <SkeletonBlock style={styles.header} />
+                                <SkeletonBlock style={styles.header} />
+                            </View>
+                            <View style={{ flexDirection: 'column', display: 'flex' }}>
+                                <SkeletonBlock style={styles.subHeader} />
+                                <SkeletonBlock style={styles.subHeader} />
+                            </View>
+                        </View>
                     ) : (
                         <>
                             <View style={styles.detailRow}>
@@ -435,7 +471,9 @@ export default function HelperDetailPage({ params }: any) {
                 isDark={isDark}
                 styles={styles}
                 salary={salary}
+                paidLeave={paidLeave}
                 setEditedSalary={setEditedSalary}
+                setEditedPaidLeave={setEditedPaidLeave}
                 setEditModalVisible={setEditModalVisible}
                 params={params}
                 setTxnForm={setTxnForm}
@@ -453,6 +491,8 @@ export default function HelperDetailPage({ params }: any) {
                 setEditedName={setEditedName}
                 editedRole={editedRole}
                 setEditedRole={setEditedRole}
+                setEditedPaidLeave={setEditedPaidLeave}
+                editedPaidLeave={editedPaidLeave}
                 editedSalary={editedSalary}
                 setEditedSalary={setEditedSalary}
                 monthValue={monthValue}
@@ -494,11 +534,29 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         marginTop: 8,
     },
+    header: {
+        height: 20,
+        width: Dimensions.get('screen').width * 0.4,
+        marginVertical: 10,
+        alignSelf: 'center'
+    },
+    subHeader: {
+        height: 20,
+        width: Dimensions.get('screen').width * 0.2,
+        marginVertical: 10,
+        alignSelf: 'center'
+    },
     role: {
         fontSize: 16,
         fontWeight: '500',
         marginTop: 2,
         marginBottom: 12,
+    },
+    container: {
+        backgroundColor: '#f3f4f6',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 20
     },
     detailRow: {
         flexDirection: 'row',

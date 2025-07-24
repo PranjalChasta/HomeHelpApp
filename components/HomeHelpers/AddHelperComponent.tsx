@@ -36,15 +36,12 @@ export default function AddHelper() {
     const currentMonth = getMonthName(currentMonthString);
 
     const [monthValue, setMonthValue] = useState(currentMonth);
-    const [monthItemsState, setMonthItemsState] = useState(monthItems);
+    const [monthItemsState] = useState(monthItems);
 
     // Dropdown state
     const [roles, setRoles] = React.useState<string[]>([]);
     const [roleItems, setRoleItems] = React.useState<any[]>([]);
-    const [open, setOpen] = React.useState(false);
     const [roleValue, setRoleValue] = React.useState<string | null>(null);
-    const [newRole, setNewRole] = React.useState('');
-    const [visible, setVisible] = useState(false);
 
     const [modalVisible, setModalVisible] = React.useState(false);
     const [newRoleInput, setNewRoleInput] = React.useState('');
@@ -60,6 +57,7 @@ export default function AddHelper() {
                     {
                         month: monthValue, // from state
                         salary: parseFloat(data.salary),
+                        paid_leave: parseInt(data.paidLeave, 10) || 0,
                         updated_at: new Date().toISOString()
                     }
                 ],
@@ -95,9 +93,6 @@ export default function AddHelper() {
         }
     };
 
-
-
-
     // Fetch roles from CouchDB
     React.useEffect(() => {
         const fetchRoles = async () => {
@@ -130,7 +125,6 @@ export default function AddHelper() {
         setModalVisible(false);
     };
 
-
     return (
         <SafeAreaView style={{
             flex: 1,
@@ -139,7 +133,7 @@ export default function AddHelper() {
         }}>
             <TouchableNativeFeedback onPress={Keyboard.dismiss} >
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={{ flex: 1, padding: 24 }}
                 >
                     <ScrollView contentContainerStyle={{ padding: 0 }}>
@@ -213,6 +207,35 @@ export default function AddHelper() {
                                 placeholder="Select a role"
                                 containerStyle={{ marginTop: 18 }}
                                 dark={isDark}
+                            />
+
+                            {/* Paid Leave */}
+                            <Text style={[
+                                styles.label,
+                                { marginTop: 18, color: isDark ? '#e5e7eb' : '#374151' }
+                            ]}>Paid Leaves</Text>
+                            <Controller
+                                control={control}
+                                name="paidLeave"
+                                defaultValue="2"
+                                rules={{ required: true }}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            {
+                                                backgroundColor: isDark ? '#18181b' : '#f9fafb',
+                                                color: isDark ? '#f9fafb' : '#111827',
+                                                borderColor: isDark ? '#52525b' : '#d1d5db'
+                                            }
+                                        ]}
+                                        onChangeText={onChange}
+                                        value={value}
+                                        placeholder="e.g., 2"
+                                        placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
+                                        keyboardType="numeric"
+                                    />
+                                )}
                             />
 
                             {/* Salary */}

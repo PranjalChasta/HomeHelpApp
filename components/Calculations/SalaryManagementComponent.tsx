@@ -14,6 +14,7 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
     type Summary = {
         present: number;
         totalLeaves: number;
+        paidLeave: number;
         unpaidLeaves: number;
         deductions: number;
         finalSalary: number,
@@ -44,19 +45,23 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
                 .filter((date: string) => date.startsWith(currentMonthPrefix)).length;
 
             const totalDays = new Date(year, now.getMonth() + 1, 0).getDate();
-            const present = currentMonthDates.length;
+            const present = totalDays - currentMonthDates.length;
 
             const currentMonth = getCurrentMonth();
 
             const monthlySalary = (helperDoc.monthly_salary as { month: string; salary: number }[] | undefined)
                 ?.find(item => item.month === currentMonth)?.salary || 0;
 
-            const salary = calculateSalary(monthlySalary, present, leaveCount, totalDays, netAmount, netDirection);
-            const unPaid = leaveCount > 2 ? leaveCount - 2 : 0;
+            const monthlyPaidLeave = (helperDoc.monthly_salary as { month: string; salary: number; paid_leave: number }[] | undefined)
+                ?.find(item => item.month === currentMonth)?.paid_leave || 0;
+
+            const salary = calculateSalary(monthlySalary, monthlyPaidLeave, leaveCount, totalDays, netAmount, netDirection);
+            const unPaid = leaveCount > monthlyPaidLeave ? leaveCount - monthlyPaidLeave : 0;
 
             setSummary({
                 ...salary,
                 present,
+                paidLeave: monthlyPaidLeave,
                 totalLeaves: leaveCount,
                 unpaidLeaves: unPaid,
                 netAmt: netAmount,
@@ -93,7 +98,7 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
                         <View style={styles.detailRow}>
                             <Ionicons name="card-outline" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
                             <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Paid Leaves:</Text>
-                            <Text style={[styles.detailValue, { color: '#16a34a' }]}>{2}</Text>
+                            <Text style={[styles.detailValue, { color: '#16a34a' }]}>{summary.paidLeave}</Text>
                         </View>
                         <View style={styles.detailRow}>
                             <RoleIcon role="Absent" size={22} color={isDark ? '#818cf8' : '#6366f1'} />

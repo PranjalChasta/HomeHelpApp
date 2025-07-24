@@ -13,7 +13,9 @@ export const SideOptionModal = ({
     isDark,
     styles,
     salary,
+    paidLeave,
     setEditedSalary,
+    setEditedPaidLeave,
     setEditModalVisible,
     params,
     setTxnForm,
@@ -39,8 +41,10 @@ export const SideOptionModal = ({
                     <TouchableOpacity
                         style={styles.modalBtn}
                         onPress={() => {
+                            console.log('paid leave', paidLeave)
                             setModalVisible(false);
                             setEditedSalary(String(salary));
+                            setEditedPaidLeave(String(paidLeave));
                             setEditModalVisible(true);
                         }}
                     >

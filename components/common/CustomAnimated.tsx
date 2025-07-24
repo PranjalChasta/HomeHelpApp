@@ -3,7 +3,7 @@ import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const SkeletonBlock = ({ style }: { style?: any }) => {
+export const SkeletonBlock = ({ style }: { style?: any }) => {
     const shimmer = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
