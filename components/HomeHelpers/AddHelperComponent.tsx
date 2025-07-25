@@ -257,7 +257,17 @@ export default function AddHelper() {
                                                 borderColor: isDark ? '#52525b' : '#d1d5db'
                                             }
                                         ]}
-                                        onChangeText={onChange}
+                                        onChangeText={(text) => {
+                                            const numericValue = parseInt(text.replace(/[^0-9]/g, ''), 10);
+
+                                            if (text === '') {
+                                                onChange('');
+                                            } else if (!isNaN(numericValue) && numericValue <= 10000) {
+                                                onChange(numericValue.toString());
+                                            } else {
+                                                Toast.show({ type: 'info', text1: "Salary cannot be more than 10,000" });
+                                            }
+                                        }}
                                         value={value}
                                         placeholder="e.g., 5000"
                                         placeholderTextColor={isDark ? "#a1a1aa" : "#a1a1aa"}
@@ -299,6 +309,7 @@ export default function AddHelper() {
                         setNewRoleInput={setNewRoleInput}
                         handleAddRoleFromModal={handleAddRoleFromModal}
                     />
+                    <Toast />
                 </KeyboardAvoidingView>
             </TouchableNativeFeedback>
         </SafeAreaView>

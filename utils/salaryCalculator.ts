@@ -1,9 +1,13 @@
-export function calculateSalary(totalSalary: number, paidLeaves: number, totalLeaves: number, workingDays: number, netAmount: number = 0, netDirection: string = '') {
-    // const paidLeaves = 2;
+export function calculateSalary(totalSalary: number, paidLeaves: number, totalLeaves: number, workingDays: number, netAmount: number = 0, netDirection: string = '', extraWorkDay: number) {
     const unpaidLeaves = Math.max(0, totalLeaves - paidLeaves);
-    const deductionPerDay = totalSalary / workingDays;
-    const deductions = unpaidLeaves * deductionPerDay;
-    const finalSalary = (totalSalary - deductions);
+    const totalAmtPerDay = totalSalary / workingDays;
+    const deductions = unpaidLeaves * totalAmtPerDay;
+    let finalSalary = (totalSalary - deductions);
+
+    if (extraWorkDay !== 0) {
+        const extraPay = extraWorkDay * totalAmtPerDay;
+        finalSalary += extraPay;
+    }
 
     const finalAmt =
         netDirection && netAmount !== 0

@@ -87,8 +87,6 @@ export default function HelperDetailPage({ params }: any) {
                 (helperDoc?.monthly_salary as { month: string; salary: number }[] | undefined)
                     ?.find(item => item.month === currentMonth)?.salary || 0
             );
-            console.log('first, ', (helperDoc?.monthly_salary as { month: string; salary: number; paid_leave: any }[] | undefined)
-                ?.find(item => item.month === currentMonth)?.paid_leave || 2)
             setPaidLeave(
                 (helperDoc?.monthly_salary as { month: string; salary: number; paid_leave: number }[] | undefined)
                     ?.find(item => item.month === currentMonth)?.paid_leave || 2

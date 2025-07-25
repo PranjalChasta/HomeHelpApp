@@ -14,6 +14,7 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
     type Summary = {
         present: number;
         totalLeaves: number;
+        extraWorkDay: number;
         paidLeave: number;
         unpaidLeaves: number;
         deductions: number;
@@ -49,13 +50,27 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
 
             const currentMonth = getCurrentMonth();
 
+            const extraDocId = `attend_extra_${id}`;
+            const res = await db.find({
+                selector: {
+                    type: 'attendance',
+                    helper_id: id,
+                    status: 'extra-work'
+                },
+            });
+            const currentMonthString = new Date().toISOString().slice(0, 7);
+            const attdExtraWorkDoc = res?.docs?.find((item: any) => item._id === extraDocId);
+            const extraWorkDates = attdExtraWorkDoc?.dates || [];
+
+            const currentMonthExtraDates = extraWorkDates.filter((date: string) => date.startsWith(currentMonthString));
+
             const monthlySalary = (helperDoc.monthly_salary as { month: string; salary: number }[] | undefined)
                 ?.find(item => item.month === currentMonth)?.salary || 0;
 
             const monthlyPaidLeave = (helperDoc.monthly_salary as { month: string; salary: number; paid_leave: number }[] | undefined)
                 ?.find(item => item.month === currentMonth)?.paid_leave || 0;
 
-            const salary = calculateSalary(monthlySalary, monthlyPaidLeave, leaveCount, totalDays, netAmount, netDirection);
+            const salary = calculateSalary(monthlySalary, monthlyPaidLeave, leaveCount, totalDays, netAmount, netDirection, currentMonthExtraDates.length);
             const unPaid = leaveCount > monthlyPaidLeave ? leaveCount - monthlyPaidLeave : 0;
 
             setSummary({
@@ -65,7 +80,8 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
                 totalLeaves: leaveCount,
                 unpaidLeaves: unPaid,
                 netAmt: netAmount,
-                netDir: netDirection
+                netDir: netDirection,
+                extraWorkDay: currentMonthExtraDates.length
             });
         } catch (err) {
             console.error(err);
@@ -109,6 +125,11 @@ export default function SalaryManagement({ netAmount = 0, netDirection = null }:
                             <RoleIcon role="Leave" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
                             <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Total Leave Taken:</Text>
                             <Text style={[styles.detailValue, { color: isDark ? '#f9fafb' : '#1f2937' }]}>{summary.totalLeaves}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <RoleIcon role="Leave" size={22} color={isDark ? '#818cf8' : '#6366f1'} />
+                            <Text style={[styles.detailLabel, { color: isDark ? '#e5e7eb' : '#374151' }]}>Extra Working Day:</Text>
+                            <Text style={[styles.detailValue, { color: '#16a34a' }]}>{summary.extraWorkDay}</Text>
                         </View>
                         <View style={styles.detailRow}>
                             <RoleIcon role="Deduction" size={22} color={isDark ? '#818cf8' : '#6366f1'} />

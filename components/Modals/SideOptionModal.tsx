@@ -41,7 +41,6 @@ export const SideOptionModal = ({
                     <TouchableOpacity
                         style={styles.modalBtn}
                         onPress={() => {
-                            console.log('paid leave', paidLeave)
                             setModalVisible(false);
                             setEditedSalary(String(salary));
                             setEditedPaidLeave(String(paidLeave));
