@@ -1,5 +1,5 @@
 import db, { checkConnection } from '@/services/couchdb';
-import { getMonthName, months } from '@/utils/salaryCalculator';
+import { getMonthName, months } from '@/utils/commonFunction';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';

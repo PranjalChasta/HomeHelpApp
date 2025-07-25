@@ -1,13 +1,14 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import couchdb from '@/services/couchdb';
 import { reportStyles } from '@/styles/ReportStyles';
-import { AttendanceData, getCurrentMonth, getSalaryHistory, getTotalDaysInCurrentMonth, months, SalaryDataType } from '@/utils/salaryCalculator';
+import { AttendanceData, calculateAttendanceRate, generateUniqueColor, getCurrentMonth, getSalaryHistory, getTotalDaysInCurrentMonth, months, SalaryDataType } from '@/utils/commonFunction';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Dimensions, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Helper } from '../Home/DashboardComponent';
+import CustomPieChart from '../common/CustomPieChart';
 
 // Mock data for reports
 const attendanceData = [
@@ -18,15 +19,6 @@ const attendanceData = [
     { month: 'May', present: 29, absent: 2 },
     { month: 'Jun', present: 28, absent: 2 },
 ];
-
-// const salaryData = [
-//     { month: 'Jan', amount: 12000 },
-//     { month: 'Feb', amount: 12000 },
-//     { month: 'Mar', amount: 12500 },
-//     { month: 'Apr', amount: 12500 },
-//     { month: 'May', amount: 13000 },
-//     { month: 'Jun', amount: 13000 },
-// ];
 
 export default function ReportDashboard() {
     const colorScheme = useColorScheme();
@@ -41,6 +33,7 @@ export default function ReportDashboard() {
     const [salaryData, setSalaryData] = useState<SalaryDataType[]>([]);
     const [sortedSalary, setSortedSalary] = useState<SalaryDataType[]>([]);
     const [monthsLabel, setMonthsLabel] = useState<any>([]);
+    const [pieChartSalaryData, setPieChatSalaryData] = useState<any>([]);
     // const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
 
 
@@ -57,8 +50,21 @@ export default function ReportDashboard() {
             const total = helperItems.length;
             setTotalHelpers(total);
 
-            const attendancePercentage = maxAttendance > 0 ? Math.round((attendanceDocs.length / maxAttendance) * 100) : 0;
-            setAttendanceRate(attendancePercentage);
+            const pieData = helperItems.map((helper, index) => {
+                const latestSalaryEntry = helper.monthly_salary?.find(
+                    (entry: any) => entry.month === currentMonth
+                );
+
+                return {
+                    name: helper.name,
+                    value: latestSalaryEntry?.salary || 0,
+                    color: generateUniqueColor(index),
+                };
+            });
+            setPieChatSalaryData(pieData);
+
+            const { avgRate } = calculateAttendanceRate(helperItems, attendanceDocs);
+            setAttendanceRate(avgRate);
 
             const salary = getSalaryHistory(helperItems, months);
             setSalaryData(salary);
@@ -74,32 +80,11 @@ export default function ReportDashboard() {
         }, [fetchHelpers])
     );
 
-    const fetchSalaryData = () => {
-        const selectedHelper = 'Jayshree Ben'; // Or based on selection
-        const filteredSalaryData = salaryData.filter(item => item.name === selectedHelper);
-
-
-        const sortedSalaryData = [...filteredSalaryData].sort((a, b) => {
-            const monthA = a.month?.trim();
-            const monthB = b.month?.trim();
-            return months.indexOf(monthA) - months.indexOf(monthB);
-        });
-        setSortedSalary(sortedSalaryData);
-        const maxSalary = Math.max(...sortedSalaryData.map(item => item?.amount));
-        setMaxSalary(maxSalary);
-        // const months: any[] = sortedSalaryData.map(item => item.month);
-        setMonthsLabel(months);
-    }
-
-    useEffect(() => {
-        fetchSalaryData();
-    }, [salaryData]);
-
     return (
         <SafeAreaView
             style={[
                 reportStyles.container,
-                { backgroundColor: isDark ? '#111827' : '#e3e3e4ff' }
+                { backgroundColor: isDark ? '#111827' : '#e3e3e4ff', marginBottom: Platform.OS === 'ios' ? 40 : 0 }
             ]}
         >
             <View style={reportStyles.header}>
@@ -174,7 +159,11 @@ export default function ReportDashboard() {
                         Attendance Overview
                     </Text>
 
-                    <View style={reportStyles.barChartContainer}>
+                    <Text style={[reportStyles.commingSoon, { color: isDark ? '#aaaaaaff' : '#868686ff' }]}>
+                        Coming Soon
+                    </Text>
+
+                    {/* <View style={reportStyles.barChartContainer}>
                         {attendanceData.map((item, index) => (
                             <View key={index} style={reportStyles.barGroup}>
                                 <View style={reportStyles.barContainer}>
@@ -218,7 +207,7 @@ export default function ReportDashboard() {
                                 Absent
                             </Text>
                         </View>
-                    </View>
+                    </View> */}
                 </View>
 
                 {/* Salary Chart */}
@@ -229,12 +218,16 @@ export default function ReportDashboard() {
                     ]}
                 >
                     <Text style={[reportStyles.chartTitle, { color: isDark ? '#f9fafb' : '#1f2937' }]}>
-                        Salary Trends
+                        Salary Distribution (Current Month)
                     </Text>
+                    {
+                        pieChartSalaryData.length > 0 && (
+                            <CustomPieChart pieChartSalaryData={pieChartSalaryData} />
+                        )
+                    }
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={reportStyles.lineChartContainer}>
-                            {/* Line chart background grid */}
+                        {/* <View style={reportStyles.lineChartContainer}>
                             <View style={reportStyles.chartGrid}>
                                 {months.map((i) => (
                                     <View
@@ -247,7 +240,6 @@ export default function ReportDashboard() {
                                 ))}
                             </View>
 
-                            {/* Line chart */}
                             <View style={reportStyles.lineChart}>
                                 <View style={reportStyles.lineChartInner}>
                                     {sortedSalary.map((item, index) => {
@@ -288,7 +280,6 @@ export default function ReportDashboard() {
                                             </View>
                                         );
                                     })}
-                                    {/* Last dot */}
                                     <View
                                         style={[
                                             reportStyles.dot,
@@ -307,7 +298,6 @@ export default function ReportDashboard() {
                                 </View>
                             </View>
 
-                            {/* X-axis labels */}
                             <View style={reportStyles.xAxisLabels}>
                                 {months.map((item, index) => (
                                     <Text
@@ -321,7 +311,8 @@ export default function ReportDashboard() {
                                     </Text>
                                 ))}
                             </View>
-                        </View>
+                        </View> */}
+
                     </ScrollView>
 
                 </View>

@@ -65,6 +65,12 @@ export const reportStyles = StyleSheet.create({
         fontWeight: '600',
         marginBottom: 16,
     },
+    commingSoon: {
+        fontSize: 20,
+        fontWeight: '600',
+        marginBottom: 16,
+        textAlign: 'center'
+    },
     barChartContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

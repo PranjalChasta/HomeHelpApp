@@ -1,6 +1,6 @@
 import db from '@/services/couchdb';
+import { calculateSalary, getCurrentMonth } from '@/utils/commonFunction';
 import { RoleIcon } from '@/utils/roleIcons';
-import { calculateSalary, getCurrentMonth } from '@/utils/salaryCalculator';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';

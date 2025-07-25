@@ -1,3 +1,5 @@
+import { Helper } from "@/components/Home/DashboardComponent";
+
 export function calculateSalary(totalSalary: number, paidLeaves: number, totalLeaves: number, workingDays: number, netAmount: number = 0, netDirection: string = '', extraWorkDay: number) {
     const unpaidLeaves = Math.max(0, totalLeaves - paidLeaves);
     const totalAmtPerDay = totalSalary / workingDays;
@@ -26,8 +28,10 @@ export type AttendanceData = {
     helper_id: string;
     name: string;
     role: string;
+    status?: string;
     present: number;
     absent: number;
+    dates: any[];
     leaves: number;
     month: string;
 };
@@ -86,6 +90,50 @@ export const getSalaryHistory = (helpers: any[], months: string[]) => {
     // });
 
     return allSalaryData;
+};
+
+export const getCurrentMonthString = () => new Date().toISOString().slice(0, 7);
+
+export const generateUniqueColor = (index: number): string => {
+    const hue = (index * 25) % 360;         // spaced hues
+    const saturation = 70;                 // medium saturation
+    const lightness = 50;                  // darker pastel
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+export const calculateAttendanceRate = (
+    helpers: Helper[],
+    attendanceDocs: AttendanceData[]
+) => {
+    const month = getCurrentMonthString();
+    const totalDaysInMonth = getTotalDaysInCurrentMonth();
+    const attendanceRates = helpers.map((helper) => {
+        const leaveDoc = attendanceDocs.find(
+            (doc) => doc.helper_id === helper._id && doc.status === 'leave'
+        );
+        const extraDoc = attendanceDocs.find(
+            (doc) => doc.helper_id === helper._id && doc.status === 'extra-work'
+        );
+
+        const leaveCount = leaveDoc?.dates?.filter((date) => date.startsWith(month)).length || 0;
+        const extraCount = extraDoc?.dates?.filter((date) => date.startsWith(month)).length || 0;
+
+        const attendance =
+            ((totalDaysInMonth - leaveCount + extraCount) / totalDaysInMonth) * 100;
+
+        return {
+            helper_id: helper._id,
+            name: helper.name,
+            leaveCount,
+            extraCount,
+            attendanceRate: +attendance.toFixed(1),
+        };
+    });
+
+    const avgRate =
+        attendanceRates.reduce((sum, h) => sum + h.attendanceRate, 0) / attendanceRates.length || 0;
+
+    return { attendanceRates, avgRate: +avgRate.toFixed(1) };
 };
 
 
